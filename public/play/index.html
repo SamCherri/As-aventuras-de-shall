@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+    <meta name="theme-color" content="#080916" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>As Aventuras de Shall</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon-192.png" />
+    <link rel="apple-touch-icon" href="./assets/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css?v=36" />
+  </head>
+  <body>
+    <main class="game-app" id="game-app">
+      <header class="hud" aria-label="Informações do jogo">
+        <div class="hero-status">
+          <div class="hero-portrait"><img src="./assets/shall-short-neck-idle.png" alt="" /></div>
+          <div class="life-wrap">
+            <span>SHALL</span>
+            <div class="life-track" aria-label="Energia de Shall"><div class="life-fill" id="life-fill"></div></div>
+            <small id="life-text">100 / 100</small>
+          </div>
+        </div>
+        <div class="hud-right">
+          <div class="coin-counter"><span class="coin-dot">●</span><b id="coin-count">000</b></div>
+          <button class="hud-button" id="sound-button" type="button" aria-label="Ativar ou desativar som">♪</button>
+          <button class="hud-button" id="pause-button" type="button" aria-label="Pausar jogo">Ⅱ</button>
+        </div>
+      </header>
+
+      <section class="game-screen" aria-label="Fases 32-bit em Botucatu">
+        <canvas id="game-canvas" width="480" height="560" aria-label="Jogo de plataforma As Aventuras de Shall"></canvas>
+        <div class="boss-hud" id="boss-hud" hidden>
+          <div><span>CHEFÃO · <em id="boss-phase">FASE 1</em></span><b id="boss-name">JOYCE CENORITA</b></div>
+          <div class="boss-track"><div class="boss-fill" id="boss-fill"></div></div>
+        </div>
+        <div class="boss-banner" id="boss-banner" hidden>
+          <small id="boss-banner-kicker">CHEFONA DA FASE</small><strong id="boss-banner-name">JOYCE CENORITA</strong><span id="boss-banner-line">Desvie do furacão. Quando ela ficar zonza, ataque!</span>
+        </div>
+        <div class="toast" id="toast" hidden></div>
+
+        <section class="screen-layer title-layer" id="title-layer">
+          <div class="night-grid" aria-hidden="true"></div>
+          <div class="title-moon" aria-hidden="true"></div>
+          <div class="title-hero" aria-hidden="true"><img src="./assets/shall-short-neck-idle.png" alt="" /></div>
+          <div class="title-copy">
+            <p>UMA AVENTURA 32-BIT EM BOTUCATU</p>
+            <h1><span>AS AVENTURAS</span>DE SHALL</h1>
+            <div class="stage-buttons">
+              <button class="pixel-button primary" id="start-button" type="button">FASE 1 · JOYCE</button>
+              <button class="pixel-button" id="stage2-button" type="button">FASE 2 · ROCK</button>
+              <button class="pixel-button" id="stage3-button" type="button">FASE 3 · ZICO</button>
+            </div>
+            <small>3 FASES · VISUAL E TRILHA 32-BIT · FUNCIONA OFFLINE</small>
+          </div>
+        </section>
+
+        <section class="screen-layer story-layer" id="story-layer" hidden>
+          <div class="comic-panel" id="comic-panel">
+            <div class="comic-city" aria-hidden="true"></div>
+            <img class="comic-character comic-cleyde" id="comic-cleyde" src="./assets/cleyde.png" alt="Cleyde" />
+            <img class="comic-character comic-shall" id="comic-shall" src="./assets/shall-short-neck-idle.png" alt="Shall" />
+            <div class="mystery-shadow" id="mystery-shadow" aria-label="Uma sombra misteriosa"></div>
+            <div class="comic-speed" id="comic-speed" aria-hidden="true"></div>
+          </div>
+          <div class="dialogue-box">
+            <span id="story-speaker">NARRADOR</span>
+            <p id="story-text">Em algum lugar, numa noite silenciosa...</p>
+            <div class="story-actions">
+              <button id="skip-story" type="button">PULAR</button>
+              <button class="pixel-button" id="next-story" type="button">PRÓXIMO ▶</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-layer pause-layer" id="pause-layer" hidden>
+          <div class="modal-card">
+            <small>JOGO PAUSADO</small><h2>UMA PAUSA PRO SHALL</h2>
+            <button class="pixel-button primary" id="resume-button" type="button">CONTINUAR</button>
+            <button class="pixel-button" id="restart-button" type="button">RECOMEÇAR A FASE</button>
+          </div>
+        </section>
+
+        <section class="screen-layer end-layer" id="end-layer" hidden>
+          <div class="ending-comic" id="ending-comic" aria-live="polite">
+            <div class="ending-city" aria-hidden="true"></div>
+            <div class="ending-shadow" aria-hidden="true"></div>
+            <img class="ending-joyce" id="ending-boss" src="./assets/joyce-cenorita-v2.png" alt="Chefão fugindo" />
+            <img class="ending-shall" src="./assets/shall-short-neck-idle.png" alt="Shall" />
+            <div class="ending-clue" aria-label="Fotografia de Shall e Cleyde">
+              <img src="./assets/shall-short-neck-idle.png" alt="" /><span>♥</span><img src="./assets/cleyde.png" alt="" />
+            </div>
+            <div class="ending-speed" aria-hidden="true"></div>
+          </div>
+          <div class="ending-copy">
+            <small id="ending-kicker">DEPOIS DA BATALHA</small><h2 id="ending-title">JOYCE FUGIU!</h2>
+            <p id="ending-text">“Vocês não viram a última cenoura!”</p><strong id="ending-continua" hidden>CONTINUA...</strong>
+            <div class="ending-actions">
+              <button class="pixel-button primary" id="next-ending" type="button">PRÓXIMO ▶</button>
+              <button class="pixel-button primary" id="play-again" type="button" hidden>JOGAR NOVAMENTE</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-layer game-over-layer" id="game-over-layer" hidden>
+          <div class="modal-card danger-card">
+            <small>ENERGIA ESGOTADA</small><h2 id="game-over-title">SHALL VOLTA AO COMEÇO</h2>
+            <p id="game-over-text">Colete X-saladas e use o botão COMER para recuperar 25 pontos.</p>
+            <button class="pixel-button primary" id="retry-button" type="button">TENTAR NOVAMENTE</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="controls" aria-label="Controles do jogo">
+        <div class="dpad" aria-label="Direções">
+          <button class="control-button direction" data-control="left" type="button" aria-label="Mover para a esquerda">◀</button>
+          <button class="control-button direction" data-control="right" type="button" aria-label="Mover para a direita">▶</button>
+        </div>
+        <div class="action-pad">
+          <button class="control-button eat empty" data-control="eat" id="eat-button" type="button" aria-label="Comer X-salada; nenhum guardado">
+            <span class="snack-pixel" aria-hidden="true"></span><small>COMER</small><b id="snack-count">0</b>
+          </button>
+          <button class="control-button shoot" data-control="shoot" id="shoot-button" type="button" aria-label="Jogar bolinha de gude"><span>●</span><small>GUDE</small></button>
+          <button class="control-button jump" data-control="jump" type="button" aria-label="Pular"><span>↑</span><small>PULAR</small></button>
+        </div>
+      </section>
+    </main>
+    <script src="./game.js?v=36"></script>
+  </body>
+</html>

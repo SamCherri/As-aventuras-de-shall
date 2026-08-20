@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #070812;
+}
+
+.game-launcher {
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(84, 56, 145, 0.28), transparent 38%),
+    #070812;
+  color: #fff0bf;
+  font-family: "Courier New", monospace;
+  text-align: center;
+}
+
+.launcher-card { display: grid; justify-items: center; gap: 12px; }
+.launcher-card > span {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 4px solid #fff0bf;
+  background: #e94e50;
+  color: white;
+  font-size: 32px;
+  font-weight: 900;
+  box-shadow: 5px 5px 0 #513451;
+}
+.launcher-card h1 { margin: 0; color: #ffc94a; font-size: 24px; }
+.launcher-card p { margin: 0; color: #bcc5dd; font-size: 13px; }
+.launcher-card a {
+  padding: 10px 14px;
+  border: 3px solid #fff0bf;
+  background: #313a6c;
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 4px 4px 0 #05060c;
+}

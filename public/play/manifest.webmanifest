@@ -1,0 +1,27 @@
+{
+  "name": "As Aventuras de Shall",
+  "short_name": "Shall",
+  "description": "Uma aventura offline em três fases com visual 32-bit, trilhas intensas e a transformação voadora Biluia.",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#070812",
+  "theme_color": "#080916",
+  "icons": [
+    {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
