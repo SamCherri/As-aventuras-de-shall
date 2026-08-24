@@ -33,16 +33,20 @@
 
       <section class="game-screen stage4-screen" aria-label="Fase 4 aquática">
         <canvas id="stage4-canvas" width="480" height="560" aria-label="Fase aquática de As Aventuras de Shall"></canvas>
+
         <div class="stage4-depth-hud" aria-live="polite">
           <span id="stage4-zone">SUPERFÍCIE</span>
           <div class="current-meter"><small>CORRENTE</small><b id="stage4-current">CALMA</b></div>
         </div>
+
         <div class="boss-hud stage4-boss-hud" id="stage4-boss-hud" hidden>
           <div><span>CHEFÃO · <em id="stage4-boss-phase">NÍVEL 1</em></span><b>ÁGUA pOtÁVIO</b></div>
           <div class="boss-track"><div class="boss-fill" id="stage4-boss-fill"></div></div>
           <div class="potavio-water"><small>ÁGUA DO GALÃO</small><div><i id="stage4-water-fill"></i></div><b id="stage4-water-text">100%</b></div>
         </div>
+
         <div class="toast" id="stage4-toast" hidden></div>
+
         <section class="screen-layer stage4-intro" id="stage4-intro">
           <div class="stage4-intro-art" aria-hidden="true">
             <div class="intro-bubbles"></div>
@@ -58,6 +62,7 @@
             <a class="stage4-back-link" href="./index.html">VOLTAR ÀS FASES</a>
           </div>
         </section>
+
         <section class="screen-layer stage4-result" id="stage4-win" hidden>
           <div class="modal-card stage4-win-card">
             <small>GALÃO VAZIO!</small>
@@ -67,6 +72,7 @@
             <a class="pixel-button" href="./index.html">VOLTAR AO MENU</a>
           </div>
         </section>
+
         <section class="screen-layer stage4-result" id="stage4-gameover" hidden>
           <div class="modal-card danger-card">
             <small>PRESSÃO DEMAIS</small>
@@ -76,6 +82,7 @@
           </div>
         </section>
       </section>
+
       <section class="controls stage4-controls" aria-label="Controles aquáticos">
         <div class="dpad" aria-label="Direções">
           <button class="control-button direction" data-stage4-control="left" type="button" aria-label="Nadar para a esquerda">◀</button>
@@ -88,6 +95,6 @@
         </div>
       </section>
     </main>
-    <script src="./stage4.js?v=38"></script>
+    <script src="./stage4.js?v=37"></script>
   </body>
 </html>
