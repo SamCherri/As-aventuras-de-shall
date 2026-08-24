@@ -15,6 +15,7 @@ const requiredFiles = [
   "stage4.css",
   "stage4.js",
   "stage4-bridge.js",
+  "stage4-art-overlay.js",
 ];
 
 const sources = new Map(
@@ -54,7 +55,7 @@ test("todas as referências locais importantes apontam para arquivos existentes"
   }
 });
 
-test("os 29 assets visuais da baseline continuam referenciados e presentes", async () => {
+test("baseline visual e pacote artístico da fase 4 continuam presentes", async () => {
   const assets = new Set();
   for (const source of sources.values()) {
     for (const reference of localReferences(source)) {
@@ -62,14 +63,18 @@ test("os 29 assets visuais da baseline continuam referenciados e presentes", asy
     }
   }
 
-  assert.equal(assets.size, 29);
+  assert.equal(assets.size, 43);
   for (const asset of assets) {
     assert.equal((await stat(path.join(playDirectory, asset))).isFile(), true, asset);
   }
+  for (let i = 0; i < 14; i += 1) {
+    const part = `assets/stage4/art-atlas.b64.${String(i).padStart(2, "0")}.txt`;
+    assert.ok(assets.has(part), part);
+  }
 });
 
-test("scripts de gameplay continuam sintaticamente válidos", () => {
-  for (const file of ["game.js", "stage4.js", "stage4-bridge.js"]) {
+test("scripts de gameplay e arte continuam sintaticamente válidos", () => {
+  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-art-overlay.js"]) {
     assert.doesNotThrow(() => new vm.Script(sources.get(file), { filename: file }), file);
   }
 });
@@ -81,7 +86,7 @@ test("manifesto e service worker preservam URLs relativas compatíveis com subdi
   assert.match(sources.get("game.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("stage4.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("sw.js"), /caches\.match\(["']\.\/index\.html["']\)/);
-  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js"]) {
+  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-art-overlay.js"]) {
     assert.match(sources.get("sw.js"), new RegExp(file.replace(".", "\\.")), file);
   }
 });
@@ -104,6 +109,16 @@ test("baseline mantém quatro fases, chefes e transformações", () => {
   assert.match(stage4, /ESPIRO D'ÁGUA/);
   assert.match(stage4, /const\s+currents\s*=/);
   assert.match(stage4, /boss\.active\?boss\.x-hero\.w-24/);
+});
+
+test("overlay 32-bit usa o debug sem substituir o runtime funcional", () => {
+  const art = sources.get("stage4-art-overlay.js");
+  const stage4Html = sources.get("stage4.html");
+  assert.match(art, /window\.__shallStage4Debug/);
+  assert.match(art, /data:image\/png;base64/);
+  assert.match(art, /stage4-art-ready/);
+  assert.match(stage4Html, /stage4-art-overlay\.js\?v=39/);
+  assert.match(sources.get("sw.js"), /shall-aventuras-v39/);
 });
 
 test("infraestrutura de QA das quatro fases continua disponível", () => {
