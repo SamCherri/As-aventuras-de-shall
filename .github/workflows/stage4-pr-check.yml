@@ -1,0 +1,25 @@
+name: Validar Fase 4
+
+on:
+  pull_request:
+    paths:
+      - "public/play/**"
+      - "tests/play-smoke.test.mjs"
+      - ".github/workflows/stage4-pr-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke test do jogo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validar sintaxe e referências
+        run: node --test tests/play-smoke.test.mjs
