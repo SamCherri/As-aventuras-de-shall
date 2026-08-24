@@ -1,9 +1,13 @@
-const CACHE = "shall-aventuras-v36";
+const CACHE = "shall-aventuras-v37";
 const SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=36",
   "./game.js?v=36",
+  "./stage4-bridge.js?v=37",
+  "./stage4.html",
+  "./stage4.css?v=37",
+  "./stage4.js?v=37",
   "./manifest.webmanifest",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
