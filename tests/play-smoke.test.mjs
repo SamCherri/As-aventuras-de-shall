@@ -54,7 +54,7 @@ test("todas as referências locais importantes apontam para arquivos existentes"
   }
 });
 
-test("os 29 assets visuais da baseline continuam referenciados e presentes", async () => {
+test("assets da baseline e pacote visual 32-bit da fase 4 continuam referenciados e presentes", async () => {
   const assets = new Set();
   for (const source of sources.values()) {
     for (const reference of localReferences(source)) {
@@ -62,7 +62,9 @@ test("os 29 assets visuais da baseline continuam referenciados e presentes", asy
     }
   }
 
-  assert.equal(assets.size, 29);
+  assert.equal(assets.size, 43);
+  const stage4Art = [...assets].filter((asset) => asset.startsWith("assets/stage4/art-atlas.b64."));
+  assert.equal(stage4Art.length, 14);
   for (const asset of assets) {
     assert.equal((await stat(path.join(playDirectory, asset))).isFile(), true, asset);
   }
@@ -81,8 +83,13 @@ test("manifesto e service worker preservam URLs relativas compatíveis com subdi
   assert.match(sources.get("game.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("stage4.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("sw.js"), /caches\.match\(["']\.\/index\.html["']\)/);
+  assert.match(sources.get("sw.js"), /shall-aventuras-v38/);
   for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js"]) {
     assert.match(sources.get("sw.js"), new RegExp(file.replace(".", "\\.")), file);
+  }
+  for (let i = 0; i < 14; i += 1) {
+    const file = `art-atlas.b64.${String(i).padStart(2, "0")}.txt`;
+    assert.match(sources.get("sw.js"), new RegExp(file.replaceAll(".", "\\.")), file);
   }
 });
 
@@ -100,6 +107,9 @@ test("baseline mantém quatro fases, chefes e transformações", () => {
   assert.match(stage4, /POTAVIO_MAX_HEALTH/);
   assert.match(stage4, /function\s+mexilhao\s*\(/);
   assert.match(stage4, /function\s+potavio\s*\(/);
+  assert.match(stage4, /function\s+atlasDraw\s*\(/);
+  assert.match(stage4, /function\s+parallax\s*\(/);
+  assert.match(stage4, /art-atlas\.b64\./);
   assert.match(stage4, /JATO PRESSURIZADO/);
   assert.match(stage4, /ESPIRO D'ÁGUA/);
   assert.match(stage4, /const\s+currents\s*=/);
@@ -113,4 +123,5 @@ test("infraestrutura de QA das quatro fases continua disponível", () => {
   assert.match(game, /window\.__shallDebug\s*=/);
   assert.match(stage4, /new URLSearchParams\(location\.search\)\.get\(["']qa["']\)/);
   assert.match(stage4, /window\.__shallStage4Debug\s*=/);
+  assert.match(stage4, /artReady/);
 });
