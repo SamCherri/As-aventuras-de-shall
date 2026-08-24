@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v37";
+const CACHE = "shall-aventuras-v38";
 const SHELL = [
   "./",
   "./index.html",
@@ -72,6 +72,22 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  const isGameCode = event.request.destination === "script" || event.request.destination === "style";
+  if (isGameCode) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
