@@ -12,7 +12,8 @@
     const replay = event.target.closest?.("#play-again");
     if (!replay || replay.hidden) return;
     const endingTitle = document.querySelector("#ending-title")?.textContent || "";
-    if (!/ZICO/i.test(endingTitle)) return;
+    const endingBoss = document.querySelector("#ending-boss")?.getAttribute("src") || "";
+    if (!/ZICO/i.test(`${endingTitle} ${endingBoss}`)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     location.href = "./stage4.html";
