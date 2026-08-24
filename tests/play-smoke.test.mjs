@@ -98,11 +98,12 @@ test("baseline mantém quatro fases, chefes e transformações", () => {
   assert.match(index, /id=["']stage4-button["']/);
   assert.match(index, /4 FASES/);
   assert.match(stage4, /POTAVIO_MAX_HEALTH/);
-  assert.match(stage4, /function\s+drawMexilhao\s*\(/);
-  assert.match(stage4, /function\s+drawPotavio\s*\(/);
+  assert.match(stage4, /function\s+mexilhao\s*\(/);
+  assert.match(stage4, /function\s+potavio\s*\(/);
   assert.match(stage4, /JATO PRESSURIZADO/);
   assert.match(stage4, /ESPIRO D'ÁGUA/);
   assert.match(stage4, /const\s+currents\s*=/);
+  assert.match(stage4, /boss\.active\?boss\.x-hero\.w-24/);
 });
 
 test("infraestrutura de QA das quatro fases continua disponível", () => {
