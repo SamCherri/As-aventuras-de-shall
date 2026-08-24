@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v37";
+const CACHE = "shall-aventuras-v38";
 const SHELL = [
   "./",
   "./index.html",
@@ -7,7 +7,7 @@ const SHELL = [
   "./stage4-bridge.js?v=37",
   "./stage4.html",
   "./stage4.css?v=37",
-  "./stage4.js?v=37",
+  "./stage4.js?v=38",
   "./manifest.webmanifest",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
@@ -37,7 +37,21 @@ const SHELL = [
   "./assets/forest-enemies-32.png",
   "./assets/mata-horta-stage-32.png",
   "./assets/biluia-actions-32.png",
-  "./assets/boss-watchers-32.png"
+  "./assets/boss-watchers-32.png",
+  "./assets/stage4/art-atlas.b64.00.txt?v=38",
+  "./assets/stage4/art-atlas.b64.01.txt?v=38",
+  "./assets/stage4/art-atlas.b64.02.txt?v=38",
+  "./assets/stage4/art-atlas.b64.03.txt?v=38",
+  "./assets/stage4/art-atlas.b64.04.txt?v=38",
+  "./assets/stage4/art-atlas.b64.05.txt?v=38",
+  "./assets/stage4/art-atlas.b64.06.txt?v=38",
+  "./assets/stage4/art-atlas.b64.07.txt?v=38",
+  "./assets/stage4/art-atlas.b64.08.txt?v=38",
+  "./assets/stage4/art-atlas.b64.09.txt?v=38",
+  "./assets/stage4/art-atlas.b64.10.txt?v=38",
+  "./assets/stage4/art-atlas.b64.11.txt?v=38",
+  "./assets/stage4/art-atlas.b64.12.txt?v=38",
+  "./assets/stage4/art-atlas.b64.13.txt?v=38"
 ];
 
 self.addEventListener("install", (event) => {
