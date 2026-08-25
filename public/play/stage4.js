@@ -271,10 +271,12 @@
     if(Math.abs(hero.vx)>45)return [HERO.swimA,HERO.swimB,HERO.swimC,HERO.swimD][Math.floor(clock*8)%4];
     return Math.floor(clock*3)%2?HERO.idleA:HERO.idleB;
   }
+  const HERO_DRAW_SCALE=1.15;
+  function heroDrawSize(source){return [Math.round(source[2]*HERO_DRAW_SCALE),Math.round(source[3]*HERO_DRAW_SCALE)]}
   function mexilhao(t){
     if(!transformed){if(artReady){const source=HERO.transform,phase=clamp(1-transformTimer/2.4,0,1),dw=70+Math.round(phase*10),dh=90+Math.round(phase*8);drawAsset("hero",source,hero.x+27-dw/2,hero.y+34-dh/2,dw,dh,hero.face<0,.45+.45*phase)}else normalShallFallback();return}
     if(!artReady){mexilhaoFallback();return}
-    const source=heroFrame(),dw=78,dh=88,alpha=hero.inv>0&&Math.floor(hero.inv*18)%2===0?.35:1;drawAsset("hero",source,hero.x+27-dw/2,hero.y+34-dh/2,dw,dh,hero.face<0,alpha);
+    const source=heroFrame(),[dw,dh]=heroDrawSize(source),alpha=hero.inv>0&&Math.floor(hero.inv*18)%2===0?.35:1;drawAsset("hero",source,hero.x+27-dw/2,hero.y+34-dh/2,dw,dh,hero.face<0,alpha);
   }
 
   function potavioFallback(t){if(!boss.active)return;ctx.save();ctx.translate(boss.x+75,boss.y+94);const dry=clamp(1-boss.water/100,0,1),belly=1-dry*.48;rect(-42,-5,84,63,"#6f329a");ctx.save();ctx.scale(belly,1);ctx.fillStyle="#53b9dc";ctx.beginPath();ctx.ellipse(0,25,43,37,0,0,Math.PI*2);ctx.fill();ctx.restore();ctx.strokeStyle="#77dcff";ctx.lineWidth=6;ctx.strokeRect(-39,-91,78,76);ctx.restore()}
