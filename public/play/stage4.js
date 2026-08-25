@@ -187,7 +187,7 @@
     const ox=hero.x,oy=hero.y,a=hero.dashTime>0?0:610;if(keys.left){hero.vx-=a*dt;hero.face=-1}if(keys.right){hero.vx+=a*dt;hero.face=1}if(keys.swim)hero.vy-=610*dt;else hero.vy+=76*dt;
     const c=currentAt(hero);if(c){hero.vx+=c.fx*dt;hero.vy+=c.fy*dt}hero.vx*=Math.pow(hero.dashTime>0?.62:.17,dt);hero.vy*=Math.pow(.28,dt);hero.vx=clamp(hero.vx,-290,hero.dashTime>0?540:290);hero.vy=clamp(hero.vy,-275,205);hero.x+=hero.vx*dt;hero.y+=hero.vy*dt;
     const minX=boss.active?ARENA_LEFT+18:0,maxX=boss.active?boss.x-hero.w-24:WORLD_END-hero.w-12;hero.x=clamp(hero.x,minX,maxX);if(hero.y<WATER_TOP){hero.y=WATER_TOP;hero.vy=35}if(hero.y+hero.h>WATER_BOTTOM){hero.y=WATER_BOTTOM-hero.h;hero.vy=-30}
-    if(!boss.active)for(const r of reefs)if(hit(hero,r)){hero.x=ox;hero.y=oy;hero.vx*=-.2;hero.vy*=-.2;damage(7,r.x+r.w/2);break}
+    if(!boss.active)for(const r of reefs)if(hit(hero,r)){hero.x=ox;hero.y=oy;hero.vx*=-.2;hero.vy*=-.2;break}
     if(keys.shoot)fire();if(keys.dash)dash();
   }
 
