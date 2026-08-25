@@ -141,7 +141,10 @@ test("integração visual da fase 4 é nativa, recortada e sem overlay", () => {
   assert.match(stage4, /drawTiledLayer\(["']far["'],\.08/);
   assert.match(stage4, /drawTiledLayer\(["']mid["'],\.32/);
   assert.match(stage4, /drawTiledLayer\(["']fore["'],1\.14/);
-  assert.match(stage4, /dw=78,dh=88/);
+  assert.match(stage4, /const\s+HERO_DRAW_SCALE\s*=\s*1\.15/);
+  assert.match(stage4, /function\s+heroDrawSize\s*\(source\)/);
+  assert.match(stage4, /source\[2\]\*HERO_DRAW_SCALE/);
+  assert.match(stage4, /source\[3\]\*HERO_DRAW_SCALE/);
   assert.match(stage4, /172-dry\*18/);
   assert.match(stage4, /crab/);
 });
