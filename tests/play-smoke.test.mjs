@@ -15,7 +15,6 @@ const requiredFiles = [
   "stage4.css",
   "stage4.js",
   "stage4-bridge.js",
-  "stage4-art-overlay.js",
 ];
 
 const sources = new Map(
@@ -55,7 +54,7 @@ test("todas as referências locais importantes apontam para arquivos existentes"
   }
 });
 
-test("baseline visual e pacote artístico da fase 4 continuam presentes", async () => {
+test("baseline visual e pacote artístico nativo da fase 4 continuam presentes", async () => {
   const assets = new Set();
   for (const source of sources.values()) {
     for (const reference of localReferences(source)) {
@@ -73,8 +72,8 @@ test("baseline visual e pacote artístico da fase 4 continuam presentes", async 
   }
 });
 
-test("scripts de gameplay e arte continuam sintaticamente válidos", () => {
-  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-art-overlay.js"]) {
+test("scripts de gameplay continuam sintaticamente válidos", () => {
+  for (const file of ["game.js", "stage4.js", "stage4-bridge.js"]) {
     assert.doesNotThrow(() => new vm.Script(sources.get(file), { filename: file }), file);
   }
 });
@@ -86,9 +85,11 @@ test("manifesto e service worker preservam URLs relativas compatíveis com subdi
   assert.match(sources.get("game.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("stage4.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("sw.js"), /caches\.match\(["']\.\/index\.html["']\)/);
-  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-art-overlay.js"]) {
+  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js"]) {
     assert.match(sources.get("sw.js"), new RegExp(file.replace(".", "\\.")), file);
   }
+  assert.match(sources.get("sw.js"), /shall-aventuras-v40/);
+  assert.doesNotMatch(sources.get("sw.js"), /stage4-art-overlay/);
 });
 
 test("baseline mantém quatro fases, chefes e transformações", () => {
@@ -111,14 +112,50 @@ test("baseline mantém quatro fases, chefes e transformações", () => {
   assert.match(stage4, /boss\.active\?boss\.x-hero\.w-24/);
 });
 
-test("overlay 32-bit usa o debug sem substituir o runtime funcional", () => {
-  const art = sources.get("stage4-art-overlay.js");
+test("fase 4 registra inicialização, loop e debug mesmo sem arte", () => {
+  const stage4 = sources.get("stage4.js");
+  assert.match(stage4, /ui\.start\.addEventListener\(["']click["'],start\)/);
+  assert.match(stage4, /requestAnimationFrame\(loop\)/);
+  assert.match(stage4, /window\.__shallStage4Debug\s*=/);
+  assert.match(stage4, /function\s+normalShallFallback\s*\(/);
+  assert.match(stage4, /function\s+mexilhaoFallback\s*\(/);
+  assert.match(stage4, /function\s+potavioFallback\s*\(/);
+  assert.match(stage4, /function\s+reefFallback\s*\(/);
+  assert.match(stage4, /loadArt\(\);/);
+  assert.doesNotMatch(stage4, /await\s+loadArt\(\)/);
+});
+
+test("integração visual da fase 4 é nativa, recortada e sem overlay", () => {
+  const stage4 = sources.get("stage4.js");
   const stage4Html = sources.get("stage4.html");
-  assert.match(art, /window\.__shallStage4Debug/);
-  assert.match(art, /data:image\/png;base64/);
-  assert.match(art, /stage4-art-ready/);
-  assert.match(stage4Html, /stage4-art-overlay\.js\?v=39/);
-  assert.match(sources.get("sw.js"), /shall-aventuras-v39/);
+
+  assert.doesNotMatch(stage4Html, /stage4-art-overlay/);
+  assert.match(stage4Html, /stage4\.js\?v=40/);
+  assert.match(stage4, /const\s+ATLAS\s*=/);
+  assert.match(stage4, /function\s+atlasSource\s*\(/);
+  assert.match(stage4, /function\s+drawAsset\s*\(/);
+  assert.match(stage4, /ctx\.drawImage\(image,sx,sy,sw,sh,/);
+  assert.match(stage4, /ctx\.imageSmoothingEnabled=false/);
+  assert.match(stage4, /const\s+size=32,bottom=r\.y>200/);
+  assert.match(stage4, /ctx\.clip\(\)/);
+  assert.match(stage4, /drawTiledLayer\(["']far["'],\.08/);
+  assert.match(stage4, /drawTiledLayer\(["']mid["'],\.32/);
+  assert.match(stage4, /drawTiledLayer\(["']fore["'],1\.14/);
+  assert.match(stage4, /dw=78,dh=88/);
+  assert.match(stage4, /172-dry\*18/);
+  assert.match(stage4, /crab/);
+});
+
+test("os 14 chunks do atlas são versionados e cacheados sem bloquear gameplay", () => {
+  const stage4 = sources.get("stage4.js");
+  const sw = sources.get("sw.js");
+  assert.match(stage4, /Array\.from\(\{ length: 14 \}/);
+  assert.match(stage4, /data:image\/png;base64/);
+  assert.match(stage4, /artError = true/);
+  for (let i = 0; i < 14; i += 1) {
+    const suffix = String(i).padStart(2, "0");
+    assert.match(sw, new RegExp(`art-atlas\\.b64\\.${suffix}\\.txt\\?v=40`));
+  }
 });
 
 test("infraestrutura de QA das quatro fases continua disponível", () => {
