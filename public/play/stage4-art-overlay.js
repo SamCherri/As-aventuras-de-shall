@@ -118,7 +118,7 @@
 
     const foreShift = -((camera * 0.38) % 330);
     for (let x = foreShift - 330; x < VIEW_W + 330; x += 330) {
-      drawRegion("fore", x, 384, 330, 120, 0.48);
+      drawRegion("fore", x, 414, 330, 90, 0.24);
     }
   }
 
