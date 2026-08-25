@@ -132,9 +132,13 @@
     hero.inv=Math.max(0,hero.inv-dt);hero.shotCd=Math.max(0,hero.shotCd-dt);hero.dashCd=Math.max(0,hero.dashCd-dt);hero.dashTime=Math.max(0,hero.dashTime-dt);
     if(!transformed){transformTimer-=dt;hero.vy+=40*dt;hero.y=Math.min(255,hero.y+hero.vy*dt);hero.x+=25*dt;if(transformTimer<=0){transformed=true;hero.y=248;hero.vy=0;burst(hero.x+27,hero.y+34,"#80ecff",28,210);toast("TRANSFORMAÇÃO: SHALL MEXILHÃOZINHO! SEGURE NADAR PARA SUBIR",3200);tone(659,.16,"square",.035);tone(988,.2,"triangle",.03,.1);}return;}
     const ox=hero.x,oy=hero.y,a=hero.dashTime>0?0:610;if(keys.left){hero.vx-=a*dt;hero.face=-1}if(keys.right){hero.vx+=a*dt;hero.face=1}if(keys.swim)hero.vy-=610*dt;else hero.vy+=76*dt;
-    const c=currentAt(hero);if(c){hero.vx+=c.fx*dt;hero.vy+=c.fy*dt}hero.vx*=Math.pow(hero.dashTime>0?.62:.17,dt);hero.vy*=Math.pow(.28,dt);hero.vx=clamp(hero.vx,-290,hero.dashTime>0?540:290);hero.vy=clamp(hero.vy,-275,205);hero.x+=hero.vx*dt;hero.y+=hero.vy*dt;
-    const minX=boss.active?ARENA_LEFT+18:0,maxX=boss.active?boss.x-hero.w-24:WORLD_END-hero.w-12;hero.x=clamp(hero.x,minX,maxX);if(hero.y<WATER_TOP){hero.y=WATER_TOP;hero.vy=35}if(hero.y+hero.h>WATER_BOTTOM){hero.y=WATER_BOTTOM-hero.h;hero.vy=-30}
-    if(!boss.active)for(const r of reefs)if(hit(hero,r)){hero.x=ox;hero.y=oy;hero.vx*=-.2;hero.vy*=-.2;break}
+    const c=currentAt(hero);if(c){hero.vx+=c.fx*dt;hero.vy+=c.fy*dt}hero.vx*=Math.pow(hero.dashTime>0?.62:.17,dt);hero.vy*=Math.pow(.28,dt);hero.vx=clamp(hero.vx,-290,hero.dashTime>0?540:290);hero.vy=clamp(hero.vy,-275,205);
+    const minX=boss.active?ARENA_LEFT+18:0,maxX=boss.active?boss.x-hero.w-24:WORLD_END-hero.w-12;
+    hero.x=clamp(hero.x+hero.vx*dt,minX,maxX);
+    if(!boss.active)for(const r of reefs)if(hit(hero,r)){hero.x=ox;hero.vx*=-.2;break}
+    hero.y+=hero.vy*dt;
+    if(hero.y<WATER_TOP){hero.y=WATER_TOP;hero.vy=35}if(hero.y+hero.h>WATER_BOTTOM){hero.y=WATER_BOTTOM-hero.h;hero.vy=-30}
+    if(!boss.active)for(const r of reefs)if(hit(hero,r)){hero.y=oy;hero.vy*=-.2;break}
     if(keys.shoot)fire();if(keys.dash)dash();
   }
 
