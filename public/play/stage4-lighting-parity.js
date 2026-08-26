@@ -11,10 +11,23 @@
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  let visualCamera = 0;
+  let previousCameraTick = performance.now();
+  let previousMode = null;
 
-  function cameraFor(debug) {
+  function cameraFor(debug, tick) {
     const heroX = debug.hero?.x ?? 0;
-    return debug.boss?.active ? ARENA_LEFT : clamp(heroX - W * 0.3, 0, WORLD_END - W);
+    const target = clamp(debug.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
+    const dt = clamp((tick - previousCameraTick) / 1000, 0, 0.033);
+    previousCameraTick = tick;
+
+    // Espelha a interpolação usada pelo core da Fase 4 em update():
+    // camera += (target - camera) * min(1, dt * 4.5).
+    // Assim o foco de luz acompanha a câmera suavizada, não o alvo instantâneo.
+    if (previousMode !== "play") visualCamera = 0;
+    visualCamera += (target - visualCamera) * Math.min(1, dt * 4.5);
+    previousMode = debug.mode;
+    return visualCamera;
   }
 
   function worldGrade(debug) {
@@ -61,8 +74,8 @@
     ctx.restore();
   }
 
-  function heroFocus(debug) {
-    const camera = cameraFor(debug);
+  function heroFocus(debug, tick) {
+    const camera = cameraFor(debug, tick);
     const hero = debug.hero;
     if (!hero) return;
     const x = clamp(hero.x - camera + 27, 24, W - 24);
@@ -132,6 +145,8 @@
   function draw(tick) {
     const debug = typeof window.__shallStage4Debug === "function" ? window.__shallStage4Debug() : null;
     if (!debug || debug.mode !== "play") {
+      previousMode = debug?.mode ?? null;
+      previousCameraTick = tick;
       requestAnimationFrame(draw);
       return;
     }
@@ -140,7 +155,7 @@
     ctx.imageSmoothingEnabled = false;
     worldGrade(debug);
     surfaceShafts(tick, debug);
-    heroFocus(debug);
+    heroFocus(debug, tick);
     arenaLighting(tick, debug);
     readabilityVignette();
     ctx.restore();
