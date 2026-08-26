@@ -1,0 +1,54 @@
+/*
+ * Fase 4 — normalização visual com Fases 1–3.
+ *
+ * Esta camada deve ser pequena e deliberada: ela corrige somente divergências
+ * de linguagem visual que surgiram em stage4.css. A temática aquática continua
+ * própria da fase, mas HUD/controles devem parecer parte do mesmo jogo.
+ */
+
+/* Os controles das Fases 1–3 usam a mesma superfície, borda e padrão de painel. */
+.stage4-controls {
+  border-top-color: #343b68;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035) 25%, transparent 25%) 0 0 / 14px 14px,
+    #0d1127;
+}
+
+/*
+ * Recupera a gramática cromática dos três botões-base:
+ * verde = ação utilitária, azul = disparo, laranja = movimento vertical.
+ */
+.stage4-dash { border-color: #9bdd75 !important; }
+.stage4-swim { border-color: #ffb458 !important; }
+
+/*
+ * Fases 1–3 usam os próprios glifos dos botões sobre o mesmo componente base.
+ * A Fase 4 havia criado um segundo sistema de ícones em CSS, com proporções e
+ * silhuetas diferentes. Desativamos somente esses pseudo-elementos para voltar
+ * ao mesmo vocabulário visual sem alterar áreas de toque ou eventos.
+ */
+.stage4-controls .direction {
+  font-size: clamp(25px, 8vw, 38px);
+}
+
+.stage4-dash span,
+.stage4-controls .shoot > span,
+.stage4-swim span {
+  position: static;
+  display: inline;
+  width: auto;
+  height: auto;
+  font-size: inherit;
+  vertical-align: baseline;
+}
+
+.stage4-controls .direction::before,
+.stage4-controls .direction::after,
+.stage4-dash span::before,
+.stage4-dash span::after,
+.stage4-controls .shoot > span::before,
+.stage4-controls .shoot > span::after,
+.stage4-swim span::before,
+.stage4-swim span::after {
+  content: none;
+}
