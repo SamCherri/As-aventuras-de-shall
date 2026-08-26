@@ -7,7 +7,22 @@
   const W = canvas.width;
   const H = canvas.height;
   const WORLD_END = 6100;
+  const BOSS_START = 5450;
   const ARENA_LEFT = 5580;
+
+  const ART_PARTS = Array.from({ length: 14 }, (_, i) =>
+    `./assets/stage4/art-atlas.b64.${String(i).padStart(2, "0")}.txt?v=40`
+  );
+  const POTAVIO_REGION = [218, 0, 80, 60];
+  const POTAVIO = {
+    idleA: [8, 4, 52, 84],
+    idleB: [84, 7, 46, 81],
+    aim: [243, 10, 49, 78],
+    sneeze: [242, 87, 76, 80],
+  };
+
+  let watcherAtlas = null;
+  let watcherArtReady = false;
 
   const props = [
     { x: 760, kind: "support", label: "CANAL 04" },
@@ -20,6 +35,36 @@
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  async function loadWatcherArt() {
+    try {
+      const chunks = await Promise.all(ART_PARTS.map(async (url) => {
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) throw new Error(`asset ${response.status}: ${url}`);
+        return (await response.text()).trim();
+      }));
+      const image = new Image();
+      image.src = `data:image/png;base64,${chunks.join("")}`;
+      if (image.decode) await image.decode();
+      else await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = reject;
+      });
+      watcherAtlas = image;
+      watcherArtReady = true;
+    } catch (error) {
+      console.warn("Stage 4 watcher art unavailable:", error);
+    }
+  }
+
+  function atlasSource(local) {
+    const [rx, ry] = POTAVIO_REGION;
+    const sx = Math.floor(local[0] / 4);
+    const sy = Math.floor(local[1] / 4);
+    const ex = Math.max(sx + 1, Math.floor((local[0] + local[2]) / 4));
+    const ey = Math.max(sy + 1, Math.floor((local[1] + local[3]) / 4));
+    return [rx + sx, ry + sy, ex - sx, ey - sy];
   }
 
   function rect(x, y, w, h, color, alpha = 1) {
@@ -105,6 +150,76 @@
     sign(x - 38, 88, label);
   }
 
+  function drawWatcherSprite(source, x, y, w, h, alpha) {
+    if (!watcherArtReady || !watcherAtlas) return false;
+    const [sx, sy, sw, sh] = atlasSource(source);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = "saturate(1.12) contrast(1.06) brightness(.82)";
+    ctx.drawImage(watcherAtlas, sx, sy, sw, sh, Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    ctx.restore();
+    return true;
+  }
+
+  function potavioWatcher(debug, tick) {
+    if (!watcherArtReady || debug.boss?.active) return;
+    const heroX = debug.hero?.x ?? 0;
+    const start = 620;
+    const end = BOSS_START - 180;
+    if (heroX < start || heroX > end) return;
+
+    const progress = clamp((heroX - start) / (end - start), 0, 1);
+    const idleFrame = Math.floor(tick * 0.0024) % 2 ? POTAVIO.idleA : POTAVIO.idleB;
+    const frame = progress < 0.38 ? idleFrame : progress < 0.72 ? POTAVIO.aim : (Math.floor(tick * 0.004) % 2 ? POTAVIO.sneeze : POTAVIO.aim);
+    const watcherW = 238 + progress * 48;
+    const watcherH = 324 + progress * 54;
+    const watcherX = W / 2 - watcherW / 2 + Math.sin(tick * 0.0011) * 6;
+    const watcherY = -86 + Math.sin(tick * 0.0017) * 4;
+    const apertureX = 66;
+    const apertureY = 58;
+    const apertureW = W - 132;
+    const apertureH = 202;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(apertureX, apertureY, apertureW, apertureH);
+    ctx.clip();
+
+    const aura = ctx.createRadialGradient(W / 2, 126, 26, W / 2, 126, 210);
+    aura.addColorStop(0, `rgba(87,229,243,${0.06 + progress * 0.12})`);
+    aura.addColorStop(1, "rgba(10,61,87,0)");
+    ctx.fillStyle = aura;
+    ctx.fillRect(apertureX, apertureY, apertureW, apertureH);
+
+    drawWatcherSprite(frame, watcherX, watcherY, watcherW, watcherH, 0.34 + progress * 0.28);
+    rect(apertureX, apertureY, apertureW, apertureH, "#063451", 0.12);
+    ctx.restore();
+
+    // Estrutura frontal: a moldura passa na frente do boss, como os watchers das Fases 1–3.
+    rect(apertureX - 14, apertureY - 10, apertureW + 28, 14, "#031824", 0.96);
+    rect(apertureX - 14, apertureY + apertureH - 4, apertureW + 28, 16, "#031824", 0.96);
+    rect(apertureX - 14, apertureY - 2, 14, apertureH + 8, "#041d2b", 0.96);
+    rect(apertureX + apertureW, apertureY - 2, 14, apertureH + 8, "#041d2b", 0.96);
+    rect(apertureX - 8, apertureY - 4, apertureW + 16, 4, "#39818b", 0.78);
+    rect(apertureX - 8, apertureY + apertureH + 3, apertureW + 16, 4, "#235d68", 0.72);
+
+    for (let x = apertureX + 42; x < apertureX + apertureW - 20; x += 86) {
+      rect(x, apertureY - 2, 7, apertureH + 8, "#062431", 0.82);
+      rect(x + 2, apertureY + 2, 2, apertureH, "#4a9098", 0.55);
+    }
+
+    if (progress > 0.62) {
+      const marks = progress > 0.84 ? 3 : 2;
+      for (let i = 0; i < marks; i += 1) {
+        const mx = W / 2 - 44 + i * 42;
+        const my = 78 + (i % 2) * 12;
+        rect(mx, my, 5, 21, progress > 0.84 ? "#fff0a2" : "#7de6eb", 0.8);
+        rect(mx + 2, my - 8, 4, 5, progress > 0.84 ? "#fff0a2" : "#7de6eb", 0.72);
+      }
+    }
+  }
+
   function edgeReef() {
     // Foreground edge framing analogous to the large occluders used in Fases 1–3,
     // but kept outside the central combat/readability corridor.
@@ -117,7 +232,7 @@
     }
   }
 
-  function draw() {
+  function draw(tick) {
     const debug = typeof window.__shallStage4Debug === "function" ? window.__shallStage4Debug() : null;
     if (!debug || debug.mode !== "play") {
       requestAnimationFrame(draw);
@@ -133,6 +248,8 @@
     ctx.save();
     ctx.imageSmoothingEnabled = false;
 
+    potavioWatcher(debug, tick);
+
     for (const prop of props) {
       const sx = prop.x - camera;
       if (sx < -150 || sx > W + 150) continue;
@@ -146,5 +263,6 @@
     requestAnimationFrame(draw);
   }
 
+  loadWatcherArt();
   requestAnimationFrame(draw);
 })();
