@@ -1,12 +1,220 @@
 /*
  * Fase 4 — normalização visual com Fases 1–3.
  *
- * Esta camada deve ser pequena e deliberada: ela corrige somente divergências
- * de linguagem visual que surgiram em stage4.css. A temática aquática continua
- * própria da fase, mas HUD/controles devem parecer parte do mesmo jogo.
+ * Esta camada existe para trazer a Fase 4 de volta à gramática visual já
+ * estabelecida em styles.css. A temática aquática continua própria, mas a
+ * composição, HUD, controles e tela de entrada devem parecer parte do mesmo jogo.
  */
 
-/* Os controles das Fases 1–3 usam a mesma superfície, borda e padrão de painel. */
+/* -------------------------------------------------------------------------- */
+/* SHELL / HUD — mesma estrutura visual usada nas Fases 1–3                  */
+/* -------------------------------------------------------------------------- */
+
+.stage4-app {
+  background: #080916;
+  box-shadow: 0 0 0 2px #2b3159, 0 0 70px rgba(74, 57, 135, .42);
+}
+
+.stage4-hud {
+  border-bottom-color: #343b68;
+  background:
+    linear-gradient(90deg, rgba(88, 210, 226, .055) 1px, transparent 1px) 0 0 / 12px 12px,
+    #10152c;
+}
+
+.stage4-portrait {
+  border-color: var(--cream);
+  background: #26335d;
+  box-shadow: 3px 3px 0 #070914;
+}
+
+.stage4-shell-counter {
+  border-color: #555d8c;
+  background: #090c1d;
+  box-shadow: 2px 2px 0 #05060c;
+}
+
+.stage4-screen {
+  background: #080b1c;
+  box-shadow: none;
+}
+
+/* O medidor aquático vira um elemento secundário, como os hints/toasts das fases base. */
+.stage4-depth-hud {
+  top: 8px;
+  left: 8px;
+  gap: 5px;
+}
+
+.stage4-depth-hud > span,
+.current-meter {
+  padding: 4px 7px;
+  border: 2px solid #69709b;
+  background: rgba(9, 12, 29, .9);
+  box-shadow: 2px 2px 0 #05060c;
+  color: #eef5ff;
+  font-size: 8px;
+}
+
+.current-meter small { color: #58d2e2; }
+.current-meter b { color: #ffc94a; }
+
+/* -------------------------------------------------------------------------- */
+/* TELA DE ENTRADA — recomposição para seguir a title-layer canônica          */
+/* -------------------------------------------------------------------------- */
+
+.stage4-intro {
+  display: block;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(5,7,21,.08), #090a19 82%),
+    radial-gradient(circle at 74% 18%, rgba(88,210,226,.16) 0 10%, transparent 10.5%),
+    linear-gradient(#102e50, #16496b 49%, #12152b 82%);
+  color: var(--cream);
+}
+
+/* O antigo bloco 50/50 dava aparência de tela separada. Agora a arte ocupa a cena,
+ * como title-layer nas Fases 1–3, com personagem à esquerda e ameaça à direita. */
+.stage4-intro-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(3,18,40,.2), transparent 34%, rgba(3,18,40,.18)),
+    repeating-linear-gradient(90deg, transparent 0 42px, rgba(121,226,240,.09) 43px 46px, transparent 47px 78px);
+}
+
+.stage4-intro-art::before {
+  content: "";
+  position: absolute;
+  inset: 57% 0 0;
+  background:
+    linear-gradient(90deg, #11162c 7%, transparent 7% 12%, #18213a 12% 24%, transparent 24% 29%, #111a31 29% 45%, transparent 45% 50%, #182038 50% 66%, transparent 66% 72%, #10182e 72% 88%, transparent 88%),
+    repeating-linear-gradient(90deg, transparent 0 25px, rgba(91,219,232,.34) 26px 30px, transparent 31px 48px);
+  border-top: 5px solid #0b0e20;
+  opacity: .86;
+}
+
+.stage4-intro-art::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 28%;
+  background:
+    repeating-linear-gradient(90deg, #1d3542 0 34px, #142b38 34px 66px);
+  clip-path: polygon(0 42%, 8% 20%, 17% 52%, 29% 25%, 41% 63%, 55% 29%, 70% 55%, 84% 17%, 100% 48%, 100% 100%, 0 100%);
+  opacity: .94;
+}
+
+/* Shall passa a ter presença grande no canto inferior esquerdo, seguindo o title-hero. */
+.intro-mexilhao {
+  left: -18px;
+  right: auto;
+  top: auto;
+  bottom: 86px;
+  width: 188px;
+  height: 168px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  clip-path: none;
+  transform: rotate(-3deg);
+  filter: drop-shadow(7px 8px 0 rgba(3,4,13,.55));
+}
+
+.intro-mexilhao .pixel-shell-icon {
+  transform: scale(2.45);
+}
+
+/* Água pOtávio funciona como o watcher/ameaça visual das fases anteriores. */
+.intro-potavio {
+  left: auto;
+  right: 18px;
+  top: 36px;
+  bottom: auto;
+  width: 124px;
+  height: 154px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  clip-path: none;
+  opacity: .92;
+  filter: drop-shadow(6px 7px 0 rgba(3,4,13,.52));
+}
+
+.intro-potavio .pixel-drop-icon {
+  transform: scale(1.65);
+}
+
+.stage4-intro-copy {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 208px;
+  padding: 0 14px 20px 168px;
+  text-align: right;
+  background: linear-gradient(180deg, transparent 0, rgba(7,9,24,.72) 26%, rgba(7,9,24,.98) 100%);
+}
+
+.stage4-intro-copy > p:first-child {
+  margin: 0 0 8px;
+  color: var(--cyan);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-shadow: 2px 2px #080a17;
+}
+
+.stage4-intro-copy h1 {
+  margin: 0 0 6px;
+  color: var(--gold);
+  font-size: clamp(38px, 11vw, 54px);
+  line-height: .8;
+  letter-spacing: -.07em;
+  text-shadow: 4px 4px 0 #2f7291, 7px 7px 0 #080914;
+}
+
+.stage4-intro-copy h1 span {
+  display: block;
+  color: #fff3ca;
+  font-size: .58em;
+  letter-spacing: .07em;
+}
+
+.stage4-intro-copy > strong {
+  display: block;
+  margin: 8px 0 7px;
+  color: #fff3ca;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-shadow: 2px 2px #080914;
+}
+
+.stage4-intro-text {
+  max-width: 285px;
+  margin: 0 0 10px auto;
+  color: #c8d6e8;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.stage4-intro-copy .pixel-button {
+  min-width: min(50vw, 186px);
+}
+
+.stage4-back-link {
+  margin-top: 8px;
+  color: #939bbd;
+  font-size: 8px;
+  letter-spacing: .06em;
+}
+
+/* -------------------------------------------------------------------------- */
+/* CONTROLES — mesma gramática de componente/cor das Fases 1–3                */
+/* -------------------------------------------------------------------------- */
+
 .stage4-controls {
   border-top-color: #343b68;
   background:
@@ -14,19 +222,9 @@
     #0d1127;
 }
 
-/*
- * Recupera a gramática cromática dos três botões-base:
- * verde = ação utilitária, azul = disparo, laranja = movimento vertical.
- */
 .stage4-dash { border-color: #9bdd75 !important; }
 .stage4-swim { border-color: #ffb458 !important; }
 
-/*
- * Fases 1–3 usam os próprios glifos dos botões sobre o mesmo componente base.
- * A Fase 4 havia criado um segundo sistema de ícones em CSS, com proporções e
- * silhuetas diferentes. Desativamos somente esses pseudo-elementos para voltar
- * ao mesmo vocabulário visual sem alterar áreas de toque ou eventos.
- */
 .stage4-controls .direction {
   font-size: clamp(25px, 8vw, 38px);
 }
@@ -51,4 +249,23 @@
 .stage4-swim span::before,
 .stage4-swim span::after {
   content: none;
+}
+
+@media (max-width: 380px) {
+  .stage4-intro-copy {
+    padding-left: 142px;
+  }
+
+  .intro-mexilhao {
+    left: -30px;
+    width: 164px;
+  }
+
+  .stage4-intro-copy h1 {
+    font-size: 36px;
+  }
+
+  .stage4-intro-text {
+    font-size: 7px;
+  }
 }
