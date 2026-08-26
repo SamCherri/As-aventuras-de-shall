@@ -357,8 +357,117 @@
 
 .stage4-controls .control-button { touch-action: none; }
 .stage4-dash { border-color: #69e2ef !important; }
-.stage4-dash span { color: #a9f7ff; font-size: 21px; }
+.stage4-dash span { color: #a9f7ff; font-size: 0; }
 .stage4-swim { border-color: #78dcef !important; }
+
+/* Ícones de gameplay desenhados em CSS para evitar glifos que mudam entre Android/fontes. */
+.stage4-controls .direction,
+.stage4-dash span,
+.stage4-controls .shoot > span,
+.stage4-swim span {
+  position: relative;
+}
+
+.stage4-controls .direction {
+  font-size: 0;
+}
+
+.stage4-controls .direction::before,
+.stage4-controls .direction::after,
+.stage4-dash span::before,
+.stage4-dash span::after,
+.stage4-controls .shoot > span::before,
+.stage4-controls .shoot > span::after,
+.stage4-swim span::before,
+.stage4-swim span::after {
+  content: "";
+  position: absolute;
+  image-rendering: pixelated;
+}
+
+.stage4-controls .direction::before {
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 8px;
+  background: #d9fbff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 -4px 0 #d9fbff, 0 4px 0 #d9fbff;
+}
+
+.stage4-controls .direction::after {
+  top: 50%;
+  width: 12px;
+  height: 20px;
+  background: #69e8f4;
+  transform: translateY(-50%);
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+
+.stage4-controls .direction:first-child::after {
+  left: calc(50% - 20px);
+}
+
+.stage4-controls .direction:last-child::after {
+  right: calc(50% - 20px);
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.stage4-dash span,
+.stage4-controls .shoot > span,
+.stage4-swim span {
+  display: inline-block;
+  width: 26px;
+  height: 24px;
+  font-size: 0;
+  vertical-align: middle;
+}
+
+.stage4-dash span::before,
+.stage4-dash span::after {
+  top: 4px;
+  width: 10px;
+  height: 16px;
+  background: #a9f7ff;
+  clip-path: polygon(0 0, 45% 0, 100% 50%, 45% 100%, 0 100%, 55% 50%);
+}
+
+.stage4-dash span::before { left: 1px; }
+.stage4-dash span::after { right: 1px; }
+
+.stage4-controls .shoot > span::before {
+  left: 6px;
+  top: 5px;
+  width: 14px;
+  height: 14px;
+  background: #d9fbff;
+  box-shadow: inset -4px -4px 0 #58c9e5, 3px 3px 0 #07314f;
+}
+
+.stage4-controls .shoot > span::after {
+  left: 9px;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  background: #ffffff;
+}
+
+.stage4-swim span::before {
+  left: 9px;
+  top: 2px;
+  width: 8px;
+  height: 18px;
+  background: #d9fbff;
+}
+
+.stage4-swim span::after {
+  left: 4px;
+  top: 0;
+  width: 18px;
+  height: 10px;
+  background: #69e8f4;
+  clip-path: polygon(50% 0, 100% 100%, 65% 100%, 65% 80%, 35% 80%, 35% 100%, 0 100%);
+}
 
 @media (max-height: 760px) {
   .stage4-intro-copy { padding-top: 10px; }
