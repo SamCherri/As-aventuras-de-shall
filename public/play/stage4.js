@@ -294,7 +294,7 @@
   }
   function fx(){for(const p of particles){ctx.globalAlpha=clamp(p.life/.7,0,1);rect(p.x,p.y,p.size,p.size,p.color)}ctx.globalAlpha=1}
   function transformText(){if(transformed||mode!=="play")return;ctx.fillStyle="#fff3a3";ctx.font="bold 13px monospace";ctx.textAlign="center";ctx.fillText(transformTimer>1.2?"A ÁGUA ESTÁ MUDANDO O SHALL...":"MEXILHÃOZINHO!",hero.x+27,hero.y-24)}
-  function foreground(){drawTiledLayer("fore",1.14,376,150,.42)}
+  function foreground(){drawTiledLayer("fore",1.14,410,96,.26)}
 
   function draw(t){
     ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;backdrop(t);
