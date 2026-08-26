@@ -17,6 +17,7 @@ const requiredFiles = [
   "stage4-bridge.js",
   "stage4-impact-parity.js",
   "stage4-boss-parity.js",
+  "stage4-lighting-parity.js",
 ];
 
 const sources = new Map(
@@ -75,7 +76,7 @@ test("baseline visual e pacote artístico nativo da fase 4 continuam presentes",
 });
 
 test("scripts de gameplay continuam sintaticamente válidos", () => {
-  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js"]) {
+  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js"]) {
     assert.doesNotThrow(() => new vm.Script(sources.get(file), { filename: file }), file);
   }
 });
@@ -87,7 +88,7 @@ test("manifesto e service worker preservam URLs relativas compatíveis com subdi
   assert.match(sources.get("game.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("stage4.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("sw.js"), /caches\.match\(["']\.\/index\.html["']\)/);
-  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js"]) {
+  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js"]) {
     assert.match(sources.get("sw.js"), new RegExp(file.replace(".", "\\.")), file);
   }
   assert.match(sources.get("sw.js"), /shall-aventuras-v40/);
@@ -135,6 +136,7 @@ test("integração visual da fase 4 é nativa, recortada e sem overlay de arte",
   assert.match(stage4Html, /stage4\.js\?v=40/);
   assert.match(stage4Html, /stage4-impact-parity\.js\?v=1/);
   assert.match(stage4Html, /stage4-boss-parity\.js\?v=1/);
+  assert.match(stage4Html, /stage4-lighting-parity\.js\?v=1/);
   assert.match(stage4, /const\s+ATLAS\s*=/);
   assert.match(stage4, /function\s+atlasSource\s*\(/);
   assert.match(stage4, /function\s+drawAsset\s*\(/);
@@ -176,6 +178,18 @@ test("ataques do Água pOtávio preservam telegraph visual desacoplado do gamepl
   assert.doesNotMatch(parity, /boss\.hp\s*=/);
   assert.doesNotMatch(parity, /boss\.water\s*=/);
   assert.doesNotMatch(parity, /hero\.hp\s*=/);
+});
+
+test("iluminação da fase 4 acompanha a câmera suavizada sem escrever no gameplay", () => {
+  const parity = sources.get("stage4-lighting-parity.js");
+  assert.match(parity, /__shallStage4Debug/);
+  assert.match(parity, /visualCamera/);
+  assert.match(parity, /dt\s*\*\s*4\.5/);
+  assert.match(parity, /heroFocus\(debug, tick\)/);
+  assert.match(parity, /prefers-reduced-motion/);
+  assert.doesNotMatch(parity, /hero\.hp\s*=/);
+  assert.doesNotMatch(parity, /boss\.hp\s*=/);
+  assert.doesNotMatch(parity, /boss\.water\s*=/);
 });
 
 test("os 14 chunks do atlas são versionados e cacheados sem bloquear gameplay", () => {
