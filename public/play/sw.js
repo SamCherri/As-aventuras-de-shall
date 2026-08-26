@@ -11,7 +11,7 @@ const SHELL = [
   "./stage4-parity.css?v=1",
   "./stage4.js?v=40",
   "./stage4-hero-parity.js?v=1",
-  "./stage4-enemy-parity.js?v=1",
+  "./stage4-enemy-parity.js?v=2",
   "./stage4-scene-parity.js?v=2",
   "./manifest.webmanifest",
   "./assets/icon-192.png",
