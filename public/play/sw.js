@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v41-network-first";
+const CACHE = "shall-aventuras-v40-network-first";
 const SHELL = [
   "./",
   "./index.html",
