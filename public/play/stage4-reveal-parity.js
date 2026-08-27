@@ -32,7 +32,7 @@
     visible = true;
     banner.hidden = false;
     banner.dataset.phase = String(debug?.boss?.phase ?? 1);
-    screen.classList.add("stage4-boss-reveal-active");
+    screen.classList.add("boss-reveal-active");
   }
 
   function hideReveal() {
@@ -40,7 +40,7 @@
     visible = false;
     revealUntil = 0;
     banner.hidden = true;
-    screen.classList.remove("stage4-boss-reveal-active");
+    screen.classList.remove("boss-reveal-active");
   }
 
   function frame(now) {
