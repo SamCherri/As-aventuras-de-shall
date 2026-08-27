@@ -29,3 +29,4 @@ jobs:
           node --check public/play/stage4-transform-parity.js
           node --check public/play/stage4-canonical-art-parity.js
           node --check public/play/stage4-defeat-parity.js
+          node --check public/play/stage4-foreground-parity.js
