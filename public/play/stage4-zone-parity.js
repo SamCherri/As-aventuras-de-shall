@@ -2,13 +2,17 @@
   "use strict";
 
   /*
-   * Fase 4 — identidade de microambientes alinhada às Fases 1–3.
+   * Fase 4 — microambientes com materiais do atlas nativo.
    *
-   * Este passe desenha Canal, Bolhas, Fenda, Gruta e Reservatório dentro do
-   * mesmo pipeline de backdrop/midground da fase. Antes, a camada rodava em um
-   * requestAnimationFrame próprio depois da gameplay e podia cobrir Shall,
-   * inimigos e projéteis. Agora a decoração entra atrás da ação, como nas
-   * Fases 1–3, e usa a câmera visual canônica da Fase 4.
+   * Fases 1–3 constroem cenário principalmente com arte canônica (PNGs/tiles),
+   * não com grandes massas de retângulos CSS-like. Este passe mantém Canal,
+   * Bolhas, Fenda, Gruta e Reservatório distintos, mas troca a maior parte das
+   * superfícies procedurais por reef/cave/pipe/vent/coral/arena tiles que já
+   * pertencem ao pacote oficial da Fase 4. Assim a fase preserva sua temática
+   * aquática sem parecer um segundo sistema de arte sobreposto ao jogo.
+   *
+   * A camada continua sendo desenhada no midground, atrás de gameplay. Ela não
+   * escreve em física, hitboxes, IA, HP, dano, correntezas, controles ou rotas.
    */
 
   const canvas = document.querySelector("#stage4-canvas");
@@ -18,13 +22,30 @@
   const ctx = canvas.getContext("2d");
   const previousDrawImage = proto.drawImage;
   const W = canvas.width;
-  const H = canvas.height;
   const WORLD_END = 6100;
   const ARENA_LEFT = 5580;
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 
   const FAR = { sx: 0, sy: 0, sw: 133, sh: 44 };
   const MID = { sx: 0, sy: 46, sw: 133, sh: 44 };
+  const ATLAS = {
+    tiles: [0, 138, 80, 60],
+    vfx: [82, 138, 80, 60],
+  };
+  const TILE = {
+    reefTop: [0, 0, 40, 30],
+    reefMiddle: [0, 32, 40, 32],
+    reefBottom: [0, 64, 40, 32],
+    caveWall: [40, 0, 40, 32],
+    coral: [80, 0, 40, 32],
+    pipe: [120, 64, 40, 32],
+    bubbleVent: [160, 64, 40, 32],
+    arenaFloor: [200, 64, 40, 32],
+    cracked: [240, 64, 40, 32],
+  };
+  const VFX = {
+    bubble: [0, 0, 80, 60],
+  };
 
   const ZONES = [
     { start: 0, end: 900, key: "canal" },
@@ -36,6 +57,7 @@
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   let zoneDrawnThisFrame = false;
+  let atlasImage = null;
 
   function matchesSource(args, source) {
     return args.length === 9 &&
@@ -50,15 +72,6 @@
     if (Number.isFinite(parity?.camera)) return parity.camera;
     const heroX = debug?.hero?.x ?? 0;
     return clamp(debug?.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
-  }
-
-  function rect(x, y, w, h, color, alpha = 1) {
-    if (w <= 0 || h <= 0 || alpha <= 0) return;
-    ctx.save();
-    ctx.globalAlpha *= alpha;
-    ctx.fillStyle = color;
-    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
-    ctx.restore();
   }
 
   function zoneAt(heroX) {
@@ -76,185 +89,172 @@
     };
   }
 
-  function pixelBubble(x, y, size, alpha) {
-    const s = Math.max(2, Math.round(size / 4) * 2);
-    rect(x + s, y, s * 2, s, "#c9fbff", alpha * 0.72);
-    rect(x, y + s, s, s * 2, "#73d8e9", alpha * 0.76);
-    rect(x + s * 3, y + s, s, s * 2, "#2c8dab", alpha * 0.68);
-    rect(x + s, y + s * 3, s * 2, s, "#1b6f91", alpha * 0.62);
-    rect(x + s, y + s, s, s, "#e7ffff", alpha * 0.82);
+  function atlasSource(regionName, local) {
+    const region = ATLAS[regionName];
+    if (!region) return null;
+    const [rx, ry] = region;
+    const sx = Math.floor(local[0] / 4);
+    const sy = Math.floor(local[1] / 4);
+    const ex = Math.max(sx + 1, Math.floor((local[0] + local[2]) / 4));
+    const ey = Math.max(sy + 1, Math.floor((local[1] + local[3]) / 4));
+    return [rx + sx, ry + sy, ex - sx, ey - sy];
   }
 
-  function hazardStripe(x, y, width, alpha) {
-    const cell = 18;
-    for (let px = 0; px < width; px += cell) {
-      rect(x + px, y, Math.min(10, width - px), 7, px / cell % 2 ? "#d18a32" : "#ffe071", alpha);
+  function drawAtlas(regionName, local, x, y, w, h, alpha = 1, flipX = false) {
+    if (!atlasImage || alpha <= 0.001 || w <= 0 || h <= 0) return false;
+    const source = atlasSource(regionName, local);
+    if (!source) return false;
+    const [sx, sy, sw, sh] = source;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.imageSmoothingEnabled = false;
+    if (flipX) {
+      ctx.translate(Math.round(x + w), Math.round(y));
+      ctx.scale(-1, 1);
+      previousDrawImage.call(ctx, atlasImage, sx, sy, sw, sh, 0, 0, Math.round(w), Math.round(h));
+    } else {
+      previousDrawImage.call(ctx, atlasImage, sx, sy, sw, sh, Math.round(x), Math.round(y), Math.round(w), Math.round(h));
     }
-    rect(x, y + 7, width, 4, "#071925", alpha * 0.9);
+    ctx.restore();
+    return true;
+  }
+
+  function tile(name, x, y, w, h, alpha = 1, flipX = false) {
+    return drawAtlas("tiles", TILE[name], x, y, w, h, alpha, flipX);
+  }
+
+  function vfx(name, x, y, w, h, alpha = 1, flipX = false) {
+    return drawAtlas("vfx", VFX[name], x, y, w, h, alpha, flipX);
+  }
+
+  function rect(x, y, w, h, color, alpha = 1) {
+    if (w <= 0 || h <= 0 || alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    ctx.restore();
+  }
+
+  function repeatTiles(name, startX, endX, y, step, w, h, alpha, phase = 0) {
+    for (let x = startX + phase; x < endX; x += step) {
+      tile(name, x, y, w, h, alpha, Math.floor((x - phase) / step) % 2 !== 0);
+    }
   }
 
   function drawCanal(tick, alpha, camera) {
-    const drift = -((camera * 0.08) % 96);
-    rect(0, 58, W, 28, "#061e2b", alpha * 0.72);
-    rect(0, 82, W, 5, "#2f6872", alpha * 0.55);
-    for (let x = drift - 40; x < W + 80; x += 96) {
-      rect(x, 58, 16, 72, "#082634", alpha * 0.82);
-      rect(x + 4, 62, 5, 64, "#35727a", alpha * 0.6);
-      rect(x - 5, 118, 28, 8, "#041720", alpha * 0.88);
-      rect(x, 121, 18, 3, "#5c9aa0", alpha * 0.52);
-    }
+    const drift = -((camera * 0.09) % 96);
+    repeatTiles("arenaFloor", drift - 96, W + 96, 58, 64, 66, 42, alpha * 0.66);
+    repeatTiles("arenaFloor", drift - 96, W + 96, 462, 64, 66, 42, alpha * 0.48, 24);
 
-    const grateY = 452;
-    rect(0, grateY, W, 52, "#031720", alpha * 0.28);
-    for (let x = drift; x < W + 48; x += 36) {
-      rect(x, grateY + 12, 22, 4, "#2d6870", alpha * 0.46);
-      rect(x + 8, grateY + 16, 4, 24, "#16434e", alpha * 0.42);
+    for (let x = drift - 24; x < W + 96; x += 96) {
+      tile("pipe", x, 82, 38, 104, alpha * 0.78);
+      tile("pipe", x + 4, 400, 34, 104, alpha * 0.62, true);
+      tile("caveWall", x - 10, 170, 58, 34, alpha * 0.46, true);
     }
 
     if (!reducedMotion) {
-      const pulse = 0.45 + Math.sin(tick * 0.003) * 0.12;
-      rect(W - 38, 104, 11, 11, "#79d4c0", alpha * pulse);
-      rect(W - 35, 107, 5, 5, "#e7fff1", alpha * pulse);
+      const pulse = 0.42 + Math.sin(tick * 0.003) * 0.14;
+      rect(W - 34, 104, 8, 8, "#8ee6ce", alpha * pulse);
+      rect(W - 32, 106, 4, 4, "#effff6", alpha * pulse);
     }
   }
 
   function drawBubbleCorridor(tick, alpha, camera) {
-    const drift = ((camera * 0.12) % 120 + 120) % 120;
-    rect(0, 58, W, 16, "#0b4256", alpha * 0.42);
-    rect(0, 74, W, 4, "#5fc5d4", alpha * 0.34);
+    const drift = -((camera * 0.13) % 120);
+    repeatTiles("caveWall", drift - 120, W + 120, 58, 80, 82, 36, alpha * 0.42);
 
-    for (let x = -drift; x < W + 120; x += 120) {
-      rect(x + 28, 474, 50, 30, "#082835", alpha * 0.6);
-      rect(x + 34, 469, 38, 7, "#347e84", alpha * 0.58);
-      rect(x + 43, 463, 20, 6, "#78c9c5", alpha * 0.5);
+    for (let x = drift - 20; x < W + 140; x += 120) {
+      tile("bubbleVent", x + 24, 454, 70, 50, alpha * 0.82);
+      tile("reefTop", x + 12, 432, 94, 30, alpha * 0.44, true);
       for (let i = 0; i < 4; i += 1) {
-        const rise = reducedMotion
-          ? i * 64
-          : (tick * (0.018 + i * 0.002) + i * 67 + x * 0.21) % 360;
-        const bx = x + 45 + (i % 2) * 18;
-        const by = 454 - rise;
-        if (by > 78 && by < 468) pixelBubble(bx, by, 8 + (i % 3) * 2, alpha * 0.62);
+        const rise = reducedMotion ? i * 72 : (tick * (0.018 + i * 0.002) + i * 67 + x * 0.18) % 360;
+        const by = 444 - rise;
+        if (by > 82 && by < 448) {
+          vfx("bubble", x + 38 + (i % 2) * 18, by, 38 + (i % 3) * 7, 28 + (i % 2) * 5, alpha * 0.46, i % 2 === 1);
+        }
       }
     }
-
-    rect(8, 96, 8, 330, "#1d6071", alpha * 0.25);
-    rect(W - 16, 96, 8, 330, "#1d6071", alpha * 0.25);
   }
 
   function drawFissure(tick, alpha, camera) {
-    const shift = ((camera * 0.05) % 52 + 52) % 52;
-    const rockDark = "#071a27";
-    const rockMid = "#153746";
-    const rockEdge = "#32606a";
-
-    for (let x = -shift - 32; x < W + 40; x += 52) {
-      const depth = 18 + ((Math.floor((x + shift) / 52) % 3 + 3) % 3) * 10;
-      rect(x, 58, 44, depth, rockDark, alpha * 0.84);
-      rect(x + 6, 58 + depth - 5, 31, 5, rockMid, alpha * 0.7);
-      rect(x + 11, 58 + depth, 17, 4, rockEdge, alpha * 0.48);
-
-      const bottomH = 20 + ((Math.floor((x + shift) / 52 + 1) % 4 + 4) % 4) * 7;
-      rect(x - 4, 505 - bottomH, 48, bottomH, rockDark, alpha * 0.76);
-      rect(x + 3, 505 - bottomH, 34, 5, rockEdge, alpha * 0.44);
+    const shift = -((camera * 0.055) % 72);
+    for (let x = shift - 72; x < W + 80; x += 72) {
+      const step = Math.abs(Math.floor((x - shift) / 72)) % 4;
+      const topH = 42 + step * 10;
+      const bottomH = 38 + ((step + 2) % 4) * 9;
+      tile(step % 2 ? "cracked" : "reefBottom", x, 58, 76, topH, alpha * 0.76, step % 2 === 1);
+      tile("reefTop", x - 4, 58 + topH - 10, 84, 18, alpha * 0.62, step % 2 === 0);
+      tile(step % 3 ? "reefMiddle" : "cracked", x - 2, 505 - bottomH, 78, bottomH, alpha * 0.68, step % 2 === 0);
+      tile("reefTop", x - 6, 505 - bottomH - 6, 86, 16, alpha * 0.58, step % 2 === 1);
     }
 
-    const flow = reducedMotion ? 0 : (tick * 0.09) % 72;
-    for (let y = 118; y < 440; y += 74) {
-      for (let x = -72 + flow; x < W + 72; x += 72) {
-        rect(x, y, 18, 4, "#71d7df", alpha * 0.21);
-        rect(x + 18, y - 5, 11, 4, "#71d7df", alpha * 0.16);
+    if (!reducedMotion) {
+      const flow = (tick * 0.08) % 92;
+      for (let y = 140; y < 430; y += 88) {
+        vfx("bubble", -48 + flow, y, 44, 28, alpha * 0.16);
+        vfx("bubble", 168 + flow, y + 24, 36, 24, alpha * 0.12, true);
+        vfx("bubble", 360 + flow, y - 18, 32, 22, alpha * 0.1);
       }
     }
-
-    rect(0, 58, 18, H - 113, "#03121d", alpha * 0.28);
-    rect(W - 18, 58, 18, H - 113, "#03121d", alpha * 0.28);
-  }
-
-  function shellCluster(x, y, flip, alpha, pulse) {
-    const stemX = flip ? x - 28 : x;
-    const midX = flip ? x - 24 : x + 4;
-    const innerX = flip ? x - 20 : x + 8;
-    const pearlX = flip ? x - 17 : x + 11;
-    rect(stemX, y + 18, 28, 6, "#254c4f", alpha * 0.68);
-    rect(midX, y + 10, 20, 8, "#8a6ca0", alpha * pulse);
-    rect(innerX, y + 3, 12, 7, "#d0a0c2", alpha * pulse);
-    rect(pearlX, y, 6, 4, "#f0cfca", alpha * pulse);
   }
 
   function drawGrotto(tick, alpha, camera) {
-    const pulse = reducedMotion ? 0.72 : 0.68 + Math.sin(tick * 0.0028) * 0.12;
-    const drift = ((camera * 0.045) % 116 + 116) % 116;
+    const drift = -((camera * 0.05) % 108);
+    repeatTiles("reefTop", drift - 108, W + 108, 58, 72, 76, 34, alpha * 0.58);
+    repeatTiles("reefMiddle", drift - 108, W + 108, 470, 72, 76, 34, alpha * 0.44, 28);
 
-    rect(0, 58, W, 18, "#102536", alpha * 0.56);
-    for (let x = -drift - 40; x < W + 120; x += 116) {
-      rect(x, 58, 78, 20, "#142f3b", alpha * 0.68);
-      rect(x + 10, 76, 58, 7, "#315960", alpha * 0.48);
-      shellCluster(x + 26, 84, false, alpha, pulse);
-    }
-
-    for (let y = 118; y < 430; y += 92) {
-      shellCluster(10, y, false, alpha * 0.78, pulse);
-      shellCluster(W - 10, y + 36, true, alpha * 0.78, pulse);
-    }
-
-    rect(0, 468, W, 36, "#08202c", alpha * 0.42);
-    for (let x = 24 - drift * 0.2; x < W; x += 82) {
-      rect(x, 475, 8, 29, "#25584e", alpha * 0.55);
-      rect(x + 7, 483, 7, 21, "#4f8370", alpha * 0.46);
-      rect(x + 3, 469, 5, 9, "#97c68f", alpha * pulse);
+    for (let x = drift - 32; x < W + 110; x += 108) {
+      tile("coral", x + 18, 90, 62, 50, alpha * 0.74, Math.floor(x / 108) % 2 !== 0);
+      tile("coral", x + 6, 420, 72, 58, alpha * 0.66, Math.floor(x / 108) % 2 === 0);
+      const pulse = reducedMotion ? 0.62 : 0.5 + Math.sin(tick * 0.0027 + x * 0.04) * 0.16;
+      rect(x + 52, 150, 5, 5, "#a7f1cf", alpha * pulse);
+      rect(x + 25, 380, 4, 4, "#d7b8ee", alpha * pulse * 0.9);
     }
   }
 
+  function hazardStripe(x, y, width, alpha) {
+    const cell = 20;
+    for (let px = 0; px < width; px += cell) {
+      rect(x + px, y, Math.min(11, width - px), 6, px / cell % 2 ? "#d18a32" : "#ffe071", alpha);
+    }
+    rect(x, y + 6, width, 3, "#071925", alpha * 0.88);
+  }
+
   function gauge(x, y, alpha, pressure) {
-    rect(x, y, 48, 34, "#031824", alpha * 0.88);
-    rect(x + 4, y + 4, 40, 26, "#183c4b", alpha * 0.86);
-    rect(x + 8, y + 8, 32, 4, "#74cbd0", alpha * 0.5);
+    tile("arenaFloor", x, y, 54, 36, alpha * 0.72);
+    rect(x + 8, y + 8, 38, 18, "#102f3d", alpha * 0.82);
     const bars = 1 + Math.round(clamp(pressure, 0, 1) * 3);
     for (let i = 0; i < 4; i += 1) {
-      rect(
-        x + 9 + i * 8,
-        y + 18,
-        5,
-        7,
-        i < bars ? (bars >= 4 ? "#efb24f" : "#73d2b5") : "#0a2634",
-        alpha * 0.9,
-      );
+      rect(x + 11 + i * 8, y + 15, 5, 7, i < bars ? (bars >= 4 ? "#efb24f" : "#73d2b5") : "#0a2634", alpha * 0.92);
     }
   }
 
   function drawReservoir(tick, alpha, camera, debug) {
-    const drift = -((camera * 0.065) % 132);
+    const drift = -((camera * 0.075) % 132);
     const pressure = clamp(((debug.hero?.x ?? 4350) - 4350) / 1100, 0, 1);
 
-    rect(0, 58, W, 22, "#04141f", alpha * 0.82);
-    rect(0, 80, W, 6, "#35636b", alpha * 0.62);
-    hazardStripe(0, 88, W, alpha * (0.36 + pressure * 0.2));
+    repeatTiles("arenaFloor", drift - 132, W + 132, 58, 66, 68, 38, alpha * 0.8);
+    hazardStripe(0, 92, W, alpha * (0.38 + pressure * 0.24));
 
-    for (let x = drift - 60; x < W + 150; x += 132) {
-      rect(x, 58, 22, 118, "#041b28", alpha * 0.82);
-      rect(x + 5, 62, 8, 108, "#315e67", alpha * 0.66);
-      rect(x - 7, 148, 36, 10, "#082331", alpha * 0.86);
-      rect(x, 151, 22, 4, "#5b8f93", alpha * 0.54);
+    for (let x = drift - 40; x < W + 150; x += 132) {
+      tile("pipe", x + 8, 92, 38, 106, alpha * 0.82);
+      tile("pipe", x + 16, 398, 34, 106, alpha * 0.7, true);
+      tile("cracked", x - 8, 184, 72, 34, alpha * 0.38, true);
     }
 
-    for (let x = 18 - drift * 0.25; x < W; x += 148) gauge(x, 112, alpha, pressure);
-
-    rect(0, 458, W, 46, "#031822", alpha * 0.46);
-    for (let x = drift; x < W + 132; x += 132) {
-      rect(x + 34, 462, 54, 8, "#315e67", alpha * 0.58);
-      rect(x + 28, 470, 66, 8, "#061f2c", alpha * 0.7);
-      rect(x + 43, 478, 36, 26, "#123d49", alpha * 0.5);
-    }
+    for (let x = 18 - drift * 0.25; x < W; x += 148) gauge(x, 118, alpha, pressure);
+    repeatTiles("arenaFloor", drift - 132, W + 132, 466, 66, 68, 38, alpha * 0.54, 22);
 
     if (!reducedMotion) {
       const warning = 0.42 + Math.sin(tick * 0.006) * 0.18;
-      rect(20, 96, 7, 7, "#ffcf62", alpha * warning);
-      rect(W - 27, 96, 7, 7, "#ffcf62", alpha * warning);
+      rect(20, 104, 7, 7, "#ffcf62", alpha * warning);
+      rect(W - 27, 104, 7, 7, "#ffcf62", alpha * warning);
     }
   }
 
   function drawZone(key, tick, alpha, camera, debug) {
-    if (alpha <= 0.001) return;
+    if (alpha <= 0.001 || !atlasImage) return;
     if (key === "canal") drawCanal(tick, alpha, camera);
     else if (key === "bubbles") drawBubbleCorridor(tick, alpha, camera);
     else if (key === "fissure") drawFissure(tick, alpha, camera);
@@ -263,10 +263,8 @@
   }
 
   function drawZoneFrame() {
-    const debug = typeof window.__shallStage4Debug === "function"
-      ? window.__shallStage4Debug()
-      : null;
-    if (!debug || debug.mode !== "play") return;
+    const debug = typeof window.__shallStage4Debug === "function" ? window.__shallStage4Debug() : null;
+    if (!debug || debug.mode !== "play" || !atlasImage) return;
 
     const heroX = debug.hero?.x ?? 0;
     const camera = cameraFor(debug);
@@ -276,9 +274,7 @@
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     drawZone(zone.key, tick, 1 - zone.blend * 0.72, camera, debug);
-    if (zone.next && zone.blend > 0) {
-      drawZone(zone.next, tick, zone.blend * 0.72, camera, debug);
-    }
+    if (zone.next && zone.blend > 0) drawZone(zone.next, tick, zone.blend * 0.72, camera, debug);
     ctx.restore();
   }
 
@@ -286,12 +282,12 @@
     const isFar = this.canvas?.id === "stage4-canvas" && matchesSource(args, FAR);
     const isMid = this.canvas?.id === "stage4-canvas" && matchesSource(args, MID);
 
+    if ((isFar || isMid) && args[0] instanceof HTMLImageElement) atlasImage = args[0];
+
     if (isFar) {
       const dx = Number(args[5]);
       const dw = Number(args[7]);
-      if (Number.isFinite(dx) && Number.isFinite(dw) && dx <= -dw) {
-        zoneDrawnThisFrame = false;
-      }
+      if (Number.isFinite(dx) && Number.isFinite(dw) && dx <= -dw) zoneDrawnThisFrame = false;
     }
 
     const result = previousDrawImage.apply(this, args);
