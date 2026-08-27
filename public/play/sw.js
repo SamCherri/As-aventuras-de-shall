@@ -9,6 +9,7 @@ const SHELL = [
   "./stage4.css?v=39",
   "./stage4-arena-depth.css?v=1",
   "./stage4-parity.css?v=1",
+  "./stage4-backdrop-parity.js?v=1",
   "./stage4.js?v=40",
   "./stage4-hero-parity.js?v=1",
   "./stage4-enemy-parity.js?v=2",
