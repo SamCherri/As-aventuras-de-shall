@@ -15,6 +15,7 @@ const SHELL = [
   "./stage4-boss-parity.js?v=1",
   "./stage4-reef-parity.js?v=1",
   "./stage4-scene-parity.js?v=2",
+  "./stage4-zone-parity.js?v=1",
   "./stage4-lighting-parity.js?v=1",
   "./stage4-impact-parity.js?v=1",
   "./manifest.webmanifest",
