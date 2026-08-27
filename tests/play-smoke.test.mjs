@@ -15,6 +15,7 @@ const requiredFiles = [
   "stage4.css",
   "stage4.js",
   "stage4-bridge.js",
+  "stage4-backdrop-parity.js",
   "stage4-impact-parity.js",
   "stage4-boss-parity.js",
   "stage4-lighting-parity.js",
@@ -79,7 +80,7 @@ test("baseline visual e pacote artístico nativo da fase 4 continuam presentes",
 });
 
 test("scripts de gameplay continuam sintaticamente válidos", () => {
-  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js", "stage4-story-parity.js"]) {
+  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-backdrop-parity.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js", "stage4-story-parity.js"]) {
     assert.doesNotThrow(() => new vm.Script(sources.get(file), { filename: file }), file);
   }
 });
@@ -91,10 +92,10 @@ test("manifesto e service worker preservam URLs relativas compatíveis com subdi
   assert.match(sources.get("game.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("stage4.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("sw.js"), /caches\.match\(["']\.\/index\.html["']\)/);
-  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js", "stage4-story-parity.js"]) {
+  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-backdrop-parity.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js", "stage4-story-parity.js"]) {
     assert.match(sources.get("sw.js"), new RegExp(file.replace(".", "\\.")), file);
   }
-  assert.match(sources.get("sw.js"), /shall-aventuras-v42/);
+  assert.match(sources.get("sw.js"), /shall-aventuras-v43/);
   assert.doesNotMatch(sources.get("sw.js"), /stage4-art-overlay/);
 });
 
@@ -138,6 +139,7 @@ test("integração visual da fase 4 é nativa, recortada e sem overlay de arte",
   assert.doesNotMatch(stage4Html, /stage4-art-overlay/);
   assert.match(stage4Html, /stage4\.js\?v=40/);
   assert.match(stage4Html, /stage4-parity\.css\?v=2/);
+  assert.match(stage4Html, /stage4-backdrop-parity\.js\?v=1/);
   assert.match(stage4Html, /stage4-impact-parity\.js\?v=1/);
   assert.match(stage4Html, /stage4-boss-parity\.js\?v=1/);
   assert.match(stage4Html, /stage4-lighting-parity\.js\?v=1/);
@@ -161,6 +163,25 @@ test("integração visual da fase 4 é nativa, recortada e sem overlay de arte",
   assert.match(stage4, /source\[3\]\*HERO_DRAW_SCALE/);
   assert.match(stage4, /172-dry\*18/);
   assert.match(stage4, /crab/);
+});
+
+test("backdrop regional permanece depois do refinamento do atlas no pipeline de desenho", () => {
+  const stage4Html = sources.get("stage4.html");
+  const gameplayIndex = stage4Html.indexOf("stage4.js?v=40");
+  const fidelityIndex = stage4Html.indexOf("stage4-sprite-fidelity.js?v=2");
+  const backdropIndex = stage4Html.indexOf("stage4-backdrop-parity.js?v=1");
+
+  assert.ok(gameplayIndex >= 0, "stage4.js ausente");
+  assert.ok(fidelityIndex > gameplayIndex, "fidelidade deve carregar depois do gameplay");
+  assert.ok(backdropIndex > fidelityIndex, "backdrop deve envolver a fidelidade para receber os recortes far/mid originais");
+
+  const backdrop = sources.get("stage4-backdrop-parity.js");
+  assert.match(backdrop, /const\s+FAR\s*=/);
+  assert.match(backdrop, /const\s+MID\s*=/);
+  assert.match(backdrop, /drawBlend\(this, state, ["']far["']\)/);
+  assert.match(backdrop, /drawBlend\(this, state, ["']mid["']\)/);
+  assert.doesNotMatch(backdrop, /hero\.hp\s*=/);
+  assert.doesNotMatch(backdrop, /boss\.(?:hp|water|state|timer)\s*=/);
 });
 
 test("feedback visual de impacto da fase 4 permanece desacoplado do gameplay", () => {
