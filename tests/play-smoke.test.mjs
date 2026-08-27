@@ -20,6 +20,7 @@ const requiredFiles = [
   "stage4-lighting-parity.js",
   "stage4-reef-parity.js",
   "stage4-reveal-parity.js",
+  "stage4-story-parity.js",
 ];
 
 const sources = new Map(
@@ -78,7 +79,7 @@ test("baseline visual e pacote artístico nativo da fase 4 continuam presentes",
 });
 
 test("scripts de gameplay continuam sintaticamente válidos", () => {
-  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js"]) {
+  for (const file of ["game.js", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js", "stage4-story-parity.js"]) {
     assert.doesNotThrow(() => new vm.Script(sources.get(file), { filename: file }), file);
   }
 });
@@ -90,10 +91,10 @@ test("manifesto e service worker preservam URLs relativas compatíveis com subdi
   assert.match(sources.get("game.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("stage4.js"), /serviceWorker\.register\(["']\.\/sw\.js["']\)/);
   assert.match(sources.get("sw.js"), /caches\.match\(["']\.\/index\.html["']\)/);
-  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js"]) {
+  for (const file of ["stage4.html", "stage4.css", "stage4.js", "stage4-bridge.js", "stage4-impact-parity.js", "stage4-boss-parity.js", "stage4-lighting-parity.js", "stage4-reef-parity.js", "stage4-reveal-parity.js", "stage4-story-parity.js"]) {
     assert.match(sources.get("sw.js"), new RegExp(file.replace(".", "\\.")), file);
   }
-  assert.match(sources.get("sw.js"), /shall-aventuras-v41/);
+  assert.match(sources.get("sw.js"), /shall-aventuras-v42/);
   assert.doesNotMatch(sources.get("sw.js"), /stage4-art-overlay/);
 });
 
@@ -142,6 +143,7 @@ test("integração visual da fase 4 é nativa, recortada e sem overlay de arte",
   assert.match(stage4Html, /stage4-lighting-parity\.js\?v=1/);
   assert.match(stage4Html, /stage4-reef-parity\.js\?v=1/);
   assert.match(stage4Html, /stage4-reveal-parity\.js\?v=1/);
+  assert.match(stage4Html, /stage4-story-parity\.js\?v=1/);
   assert.match(stage4Html, /id=["']stage4-boss-banner["']/);
   assert.match(stage4, /const\s+ATLAS\s*=/);
   assert.match(stage4, /function\s+atlasSource\s*\(/);
@@ -223,6 +225,21 @@ test("revelação do Água pOtávio replica staging das fases base sem tocar no 
   assert.match(parity, /prefers-reduced-motion/);
   assert.doesNotMatch(parity, /hero\.hp\s*=/);
   assert.doesNotMatch(parity, /boss\.(?:hp|water|state|timer)\s*=/);
+});
+
+test("staging regional da fase 4 recupera visual storytelling sem tocar no gameplay", () => {
+  const parity = sources.get("stage4-story-parity.js");
+  assert.match(parity, /CanvasRenderingContext2D/);
+  assert.match(parity, /__shallStage4Debug/);
+  assert.match(parity, /__shallStage4CameraParity/);
+  assert.match(parity, /prefers-reduced-motion/);
+  for (const landmark of ["BOIA NÃO INCLUSA", "BOLHA EXPRESS", "CORRENTEZA 220V", "MEXILHÃO VIP", "QUASE POTÁVEL", "ARENA DO GALÃO"]) {
+    assert.match(parity, new RegExp(landmark), landmark);
+  }
+  assert.match(parity, /previousDrawImage\.apply\(this, args\)/);
+  assert.doesNotMatch(parity, /hero\.hp\s*=/);
+  assert.doesNotMatch(parity, /boss\.(?:hp|water|state|timer)\s*=/);
+  assert.doesNotMatch(parity, /hero\.(?:x|y|vx|vy)\s*=/);
 });
 
 test("os 14 chunks do atlas são versionados e cacheados sem bloquear gameplay", () => {
