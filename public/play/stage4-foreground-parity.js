@@ -2,13 +2,17 @@
   "use strict";
 
   /*
-   * Fase 4 — paridade de foreground com Fases 1–3.
+   * Fase 4 — foreground regional normalizado com Fases 1–3.
    *
-   * Nas fases-base, o foreground varia por trecho e cria profundidade com props
-   * próximos da câmera sem cobrir o corredor principal de gameplay. A Fase 4
-   * ainda terminava cada frame com a mesma faixa "fore" repetida em todas as
-   * regiões. Este passe mantém essa base e acrescenta um enquadramento foreground
-   * específico por microambiente usando somente materiais nativos do atlas.
+   * Nas fases-base, o plano mais próximo varia por trecho: arquitetura, props e
+   * bordas ambientais enquadram a cena sem manter uma faixa genérica repetida
+   * durante a fase inteira. A Fase 4 ainda desenhava a faixa nativa "fore" e,
+   * depois, acrescentava outro foreground regional por cima. Isso duplicava o
+   * plano frontal, achatava a separação de profundidade e aumentava a oclusão.
+   *
+   * Este passe SUBSTITUI a faixa genérica pelo foreground específico de cada
+   * microambiente. O draw nativo é usado apenas como gatilho/âncora do pipeline;
+   * ele não é mais pintado. O corredor central permanece deliberadamente limpo.
    */
 
   const proto = window.CanvasRenderingContext2D?.prototype;
@@ -202,23 +206,28 @@
 
   function foregroundDrawImage(image, ...args) {
     const isTarget = this.canvas?.id === TARGET_CANVAS_ID && matchesFore(args);
-    if (isTarget && image instanceof HTMLImageElement) atlasImage = image;
-    if (isTarget) {
-      const dx = Number(args[4]);
-      const dw = Number(args[6]);
-      if (Number.isFinite(dx) && Number.isFinite(dw) && dx <= -dw) foregroundDrawn = false;
+    if (!isTarget) return previousDrawImage.call(this, image, ...args);
+
+    // Captura o atlas pelo mesmo draw que o runtime já faria, mas não pinta a
+    // faixa genérica. Assim o foreground regional passa a ser substituição real,
+    // não uma segunda camada empilhada sobre o plano frontal nativo.
+    if (image instanceof HTMLImageElement) atlasImage = image;
+
+    const dx = Number(args[4]);
+    const dw = Number(args[6]);
+    if (Number.isFinite(dx) && Number.isFinite(dw) && dx <= -dw) foregroundDrawn = false;
+
+    // drawTiledLayer sempre emite um tile de cauda além da borda direita. Esse
+    // tile funciona como marcador estável do fim do passe de foreground.
+    if (!foregroundDrawn && Number.isFinite(dx) && dx >= W) {
+      foregroundDrawn = true;
+      drawForegroundFrame(this);
     }
 
-    const result = previousDrawImage.call(this, image, ...args);
-
-    if (isTarget && !foregroundDrawn) {
-      const dx = Number(args[4]);
-      if (Number.isFinite(dx) && dx >= W) {
-        foregroundDrawn = true;
-        drawForegroundFrame(this);
-      }
-    }
-    return result;
+    // Suprime somente os draws da faixa FORE original. Tiles/VFX usados pelo
+    // foreground regional continuam passando por previousDrawImage e, portanto,
+    // pelo refinamento pixel-aware já instalado.
+    return undefined;
   }
 
   proto.drawImage = foregroundDrawImage;
@@ -226,7 +235,8 @@
 
   window.__shallStage4ForegroundParity = Object.freeze({
     regions: ZONES.map((zone) => zone.key),
-    language: "regional-edge-foreground",
+    language: "regional-replacement-foreground",
+    replacesNativeFore: true,
     gameplayWrites: false,
     clearGameplayCorridor: [110, 370],
   });
