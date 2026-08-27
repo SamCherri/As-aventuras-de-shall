@@ -1,0 +1,99 @@
+/*
+ * Fase 4 — identidade visual canônica.
+ *
+ * Fases 1–3 usam personagens reais nos pontos de maior destaque. Esta camada
+ * substitui os placeholders CSS da Fase 4 por arte canônica sem remover os
+ * fallbacks, mantendo carregamento resiliente e pixel hard-edge.
+ */
+
+.stage4-portrait,
+.intro-mexilhao,
+.intro-potavio {
+  position: relative;
+}
+
+.stage4-hero-portrait-art,
+.stage4-intro-potavio-art,
+.stage4-intro-shall-canonical {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
+
+.stage4-hero-portrait-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  filter: drop-shadow(2px 2px 0 rgba(4, 10, 24, .58));
+}
+
+.stage4-portrait-art-ready .stage4-hero-portrait-art {
+  opacity: 1;
+}
+
+.stage4-portrait-art-ready .stage4-portrait > .pixel-shell-icon {
+  opacity: 0;
+}
+
+/* A abertura volta a começar pelo Shall canônico usado nas Fases 1–3. */
+.stage4-intro-shall-canonical {
+  position: absolute;
+  inset: -8px -10px -4px -8px;
+  width: calc(100% + 18px);
+  height: calc(100% + 12px);
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 0;
+  transform: rotate(3deg) scale(1.08);
+  transform-origin: 48% 72%;
+  filter:
+    drop-shadow(7px 8px 0 rgba(3, 4, 13, .55))
+    saturate(1.04)
+    contrast(1.03);
+}
+
+.stage4-intro-shall-art-ready .stage4-intro-shall-canonical {
+  opacity: 1;
+}
+
+.stage4-intro-shall-art-ready .intro-mexilhao > .pixel-shell-icon {
+  opacity: 0;
+}
+
+/* Água pOtávio deixa de ser uma gota genérica e passa a usar o próprio sprite. */
+.stage4-intro-potavio-art {
+  position: absolute;
+  inset: -7px -6px -5px -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  opacity: 0;
+  transform: rotate(-2deg) scale(1.08);
+  transform-origin: 52% 65%;
+  filter:
+    drop-shadow(6px 7px 0 rgba(3, 4, 13, .54))
+    saturate(1.08)
+    contrast(1.04);
+}
+
+.stage4-potavio-intro-art-ready .stage4-intro-potavio-art {
+  opacity: 1;
+}
+
+.stage4-potavio-intro-art-ready .intro-potavio > .pixel-drop-icon {
+  opacity: 0;
+}
+
+/* Mantém a leitura da composição em aparelhos estreitos. */
+@media (max-width: 380px) {
+  .stage4-intro-shall-canonical {
+    inset: -6px -8px -2px -12px;
+    transform: rotate(3deg) scale(1.03);
+  }
+
+  .stage4-intro-potavio-art {
+    inset: -4px -3px;
+    transform: rotate(-2deg) scale(1.02);
+  }
+}
