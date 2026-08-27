@@ -212,6 +212,92 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* REVELAÇÃO DO CHEFÃO — mesma mudança de ritmo das Fases 1–3                 */
+/* -------------------------------------------------------------------------- */
+
+.stage4-boss-banner {
+  top: 24%;
+  z-index: 18;
+  display: grid;
+  gap: 3px;
+  padding: 13px 16px 14px;
+  pointer-events: none;
+  border-top-color: #d9fbff;
+  border-bottom-color: #d9fbff;
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 8px, transparent 8px 16px),
+    rgba(7, 83, 112, .97);
+  box-shadow: 0 7px 0 rgba(2, 10, 24, .52);
+  animation: stage4-boss-banner-in 420ms steps(5) both;
+}
+
+.stage4-boss-banner small {
+  color: #a9efff;
+}
+
+.stage4-boss-banner strong {
+  color: #fff7d2;
+  text-shadow: 3px 3px #0b4665, 5px 5px #03101d;
+}
+
+.stage4-boss-banner span {
+  color: #d9fbff;
+  line-height: 1.25;
+}
+
+.stage4-screen.boss-reveal-active::before,
+.stage4-screen.boss-reveal-active::after {
+  content: "";
+  position: absolute;
+  z-index: 17;
+  left: 0;
+  right: 0;
+  height: 11%;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, #040914 0 28px, #071326 28px 56px);
+}
+
+.stage4-screen.boss-reveal-active::before {
+  top: 0;
+  border-bottom: 4px solid rgba(117, 232, 244, .75);
+  animation: stage4-reveal-rail-top 360ms steps(4) both;
+}
+
+.stage4-screen.boss-reveal-active::after {
+  bottom: 0;
+  border-top: 4px solid rgba(117, 232, 244, .75);
+  animation: stage4-reveal-rail-bottom 360ms steps(4) both;
+}
+
+.stage4-screen.boss-reveal-active #stage4-canvas {
+  animation: stage4-reveal-scene 2600ms steps(6) both;
+}
+
+@keyframes stage4-boss-banner-in {
+  from { transform: translateX(-100%); }
+  72% { transform: translateX(3%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes stage4-reveal-rail-top {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes stage4-reveal-rail-bottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes stage4-reveal-scene {
+  0% { filter: brightness(.58) saturate(.72) contrast(1.08); }
+  18% { filter: brightness(.78) saturate(.9) contrast(1.1); }
+  44% { filter: brightness(.66) saturate(.78) contrast(1.13); }
+  100% { filter: brightness(.88) saturate(.96) contrast(1.05); }
+}
+
+/* -------------------------------------------------------------------------- */
 /* CONTROLES — mesma gramática de componente/cor das Fases 1–3                */
 /* -------------------------------------------------------------------------- */
 
@@ -249,6 +335,15 @@
 .stage4-swim span::before,
 .stage4-swim span::after {
   content: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage4-boss-banner,
+  .stage4-screen.boss-reveal-active::before,
+  .stage4-screen.boss-reveal-active::after,
+  .stage4-screen.boss-reveal-active #stage4-canvas {
+    animation: none;
+  }
 }
 
 @media (max-width: 380px) {
