@@ -20,6 +20,7 @@ const SHELL = [
   "./stage4-transform-parity.js?v=1",
   "./stage4-enemy-parity.js?v=2",
   "./stage4-boss-parity.js?v=1",
+  "./stage4-defeat-parity.js?v=1",
   "./stage4-reef-parity.js?v=1",
   "./stage4-scene-parity.js?v=3",
   "./stage4-zone-parity.js?v=2",
