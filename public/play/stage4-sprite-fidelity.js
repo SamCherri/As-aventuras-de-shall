@@ -2,16 +2,21 @@
   "use strict";
 
   /*
-   * Fase 4 — paridade de fidelidade dos sprites com Fases 1–3.
+   * Fase 4 — paridade de fidelidade do atlas com Fases 1–3.
    *
-   * O atlas aquático guarda os personagens em densidade muito menor que os PNGs
-   * canônicos das fases-base. Este passe não inventa arte nova: ele reconstrói
-   * bordas diagonais em 4× usando Scale2x duas vezes, preservando a paleta, a
-   * silhueta e o pixel hard-edge. O resultado continua pixel art, mas reduz o
-   * aspecto excessivamente "8-bit" do Shall Mexilhãozinho, inimigos e pOtávio.
+   * As fases-base usam PNGs canônicos grandes e desenham esses assets em hard-edge.
+   * Já o atlas aquático guarda background, midground, foreground, tiles, VFX e
+   * personagens em uma base muito compacta. Parte desse material é ampliada perto
+   * de 4× no canvas (por exemplo, as faixas far/mid de 133×44 chegam a ~532×176),
+   * deixando diagonais e contornos mais "8-bit" que o restante do jogo.
    *
-   * O wrapper só atua no canvas da Fase 4 e apenas nos três blocos de sprites do
-   * atlas. Física, hitboxes, animações, IA e timing permanecem intactos.
+   * Este passe não inventa arte nova: ele reconstrói as bordas do atlas em 4× com
+   * Scale2x aplicado duas vezes, preservando paleta, transparência, silhueta e o
+   * pixel hard-edge. O refinamento agora cobre a linguagem visual inteira da fase:
+   * cenário, materiais jogáveis, VFX, Shall Mexilhãozinho, inimigos e pOtávio.
+   *
+   * O wrapper atua somente no canvas da Fase 4 e apenas em recortes internos do
+   * atlas Base64. Física, hitboxes, animações, IA, câmera e timing permanecem intactos.
    */
 
   const proto = window.CanvasRenderingContext2D?.prototype;
@@ -21,9 +26,14 @@
   const TARGET_CANVAS_ID = "stage4-canvas";
   const SCALE_PASSES = 2;
   const REGIONS = [
-    { x: 137, y: 0, w: 80, h: 60 },
-    { x: 218, y: 0, w: 80, h: 60 },
-    { x: 137, y: 62, w: 80, h: 60 },
+    { name: "far", group: "environment", x: 0, y: 0, w: 133, h: 44 },
+    { name: "mid", group: "environment", x: 0, y: 46, w: 133, h: 44 },
+    { name: "fore", group: "environment", x: 0, y: 92, w: 133, h: 44 },
+    { name: "tiles", group: "environment", x: 0, y: 138, w: 80, h: 60 },
+    { name: "vfx", group: "environment", x: 82, y: 138, w: 80, h: 60 },
+    { name: "hero", group: "characters", x: 137, y: 0, w: 80, h: 60 },
+    { name: "potavio", group: "characters", x: 218, y: 0, w: 80, h: 60 },
+    { name: "enemies", group: "characters", x: 137, y: 62, w: 80, h: 60 },
   ];
 
   const cache = new WeakMap();
@@ -108,7 +118,7 @@
     return { words: output, width: outWidth, height: outHeight };
   }
 
-  function createRefinedSprite(image, sx, sy, sw, sh) {
+  function createRefinedArt(image, sx, sy, sw, sh) {
     const sourceCanvas = document.createElement("canvas");
     sourceCanvas.width = Math.max(1, Math.round(sw));
     sourceCanvas.height = Math.max(1, Math.round(sh));
@@ -156,7 +166,7 @@
     return refined;
   }
 
-  function refinedSprite(image, sx, sy, sw, sh) {
+  function refinedArt(image, sx, sy, sw, sh) {
     let imageCache = cache.get(image);
     if (!imageCache) {
       imageCache = new Map();
@@ -166,7 +176,7 @@
     const key = `${sx},${sy},${sw},${sh}`;
     if (imageCache.has(key)) return imageCache.get(key);
 
-    const refined = createRefinedSprite(image, sx, sy, sw, sh);
+    const refined = createRefinedArt(image, sx, sy, sw, sh);
     imageCache.set(key, refined);
     if (refined) cacheEntries += 1;
     return refined;
@@ -186,7 +196,7 @@
       return previousDrawImage.call(this, image, ...args);
     }
 
-    const refined = refinedSprite(image, sx, sy, sw, sh);
+    const refined = refinedArt(image, sx, sy, sw, sh);
     if (!refined) {
       return previousDrawImage.call(this, image, ...args);
     }
@@ -202,9 +212,15 @@
   proto.drawImage = fidelityDrawImage;
   proto.__shallStage4SpriteFidelityInstalled = true;
 
-  window.__shallStage4SpriteFidelity = Object.freeze({
+  const parityApi = Object.freeze({
     factor: 2 ** SCALE_PASSES,
     regions: REGIONS.length,
+    environmentRegions: REGIONS.filter((region) => region.group === "environment").length,
+    characterRegions: REGIONS.filter((region) => region.group === "characters").length,
+    regionNames: Object.freeze(REGIONS.map((region) => region.name)),
     cacheEntries: () => cacheEntries,
   });
+
+  window.__shallStage4ArtFidelity = parityApi;
+  window.__shallStage4SpriteFidelity = parityApi;
 })();
