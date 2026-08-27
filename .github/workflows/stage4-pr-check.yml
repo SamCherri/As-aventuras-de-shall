@@ -22,4 +22,6 @@ jobs:
         with:
           node-version: "22"
       - name: Validar sintaxe e referências
-        run: node --test tests/play-smoke.test.mjs
+        run: |
+          node --test tests/play-smoke.test.mjs
+          node --check public/play/stage4-sprite-fidelity.js
