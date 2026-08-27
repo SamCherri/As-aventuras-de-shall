@@ -29,6 +29,7 @@ const SHELL = [
   "./stage4-lighting-parity.js?v=1",
   "./stage4-impact-parity.js?v=1",
   "./stage4-reveal-parity.js?v=1",
+  "./stage4-foreground-parity.js?v=1",
   "./manifest.webmanifest",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
