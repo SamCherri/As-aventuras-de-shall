@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v42-network-first";
+const CACHE = "shall-aventuras-v43-network-first";
 const SHELL = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const SHELL = [
   "./stage4-sprite-fidelity.js?v=1",
   "./stage4-camera-parity.js?v=1",
   "./stage4-hero-parity.js?v=1",
+  "./stage4-hero-motion-parity.js?v=1",
   "./stage4-enemy-parity.js?v=2",
   "./stage4-boss-parity.js?v=1",
   "./stage4-reef-parity.js?v=1",
