@@ -1,14 +1,30 @@
 (() => {
   "use strict";
 
+  /*
+   * Fase 4 — identidade de microambientes alinhada às Fases 1–3.
+   *
+   * Este passe desenha Canal, Bolhas, Fenda, Gruta e Reservatório dentro do
+   * mesmo pipeline de backdrop/midground da fase. Antes, a camada rodava em um
+   * requestAnimationFrame próprio depois da gameplay e podia cobrir Shall,
+   * inimigos e projéteis. Agora a decoração entra atrás da ação, como nas
+   * Fases 1–3, e usa a câmera visual canônica da Fase 4.
+   */
+
   const canvas = document.querySelector("#stage4-canvas");
-  if (!canvas) return;
+  const proto = window.CanvasRenderingContext2D?.prototype;
+  if (!canvas || !proto || proto.__shallStage4ZoneParityInstalled) return;
+
   const ctx = canvas.getContext("2d");
+  const previousDrawImage = proto.drawImage;
   const W = canvas.width;
   const H = canvas.height;
   const WORLD_END = 6100;
   const ARENA_LEFT = 5580;
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+  const FAR = { sx: 0, sy: 0, sw: 133, sh: 44 };
+  const MID = { sx: 0, sy: 46, sw: 133, sh: 44 };
 
   const ZONES = [
     { start: 0, end: 900, key: "canal" },
@@ -19,37 +35,45 @@
   ];
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  let visualCamera = 0;
-  let previousTick = performance.now();
-  let previousMode = null;
+  let zoneDrawnThisFrame = false;
+
+  function matchesSource(args, source) {
+    return args.length === 9 &&
+      args[1] === source.sx && args[2] === source.sy &&
+      args[3] === source.sw && args[4] === source.sh;
+  }
+
+  function cameraFor(debug) {
+    const parity = typeof window.__shallStage4CameraParity === "function"
+      ? window.__shallStage4CameraParity()
+      : null;
+    if (Number.isFinite(parity?.camera)) return parity.camera;
+    const heroX = debug?.hero?.x ?? 0;
+    return clamp(debug?.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
+  }
 
   function rect(x, y, w, h, color, alpha = 1) {
-    if (w <= 0 || h <= 0) return;
+    if (w <= 0 || h <= 0 || alpha <= 0) return;
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha *= alpha;
     ctx.fillStyle = color;
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
     ctx.restore();
   }
 
-  function cameraFor(debug, tick) {
-    const heroX = debug.hero?.x ?? 0;
-    const target = clamp(debug.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
-    const dt = clamp((tick - previousTick) / 1000, 0, 0.033);
-    previousTick = tick;
-    if (previousMode !== "play") visualCamera = target;
-    visualCamera += (target - visualCamera) * Math.min(1, dt * 4.5);
-    previousMode = debug.mode;
-    return visualCamera;
-  }
-
   function zoneAt(heroX) {
     if (heroX >= 5450) return { key: "reservoir", local: 1, next: null, blend: 0 };
     const index = ZONES.findIndex((zone) => heroX >= zone.start && heroX < zone.end);
-    const zone = ZONES[Math.max(0, index)];
+    const safeIndex = Math.max(0, index);
+    const zone = ZONES[safeIndex];
     const local = clamp((heroX - zone.start) / Math.max(1, zone.end - zone.start), 0, 1);
-    const blend = local > 0.84 && index < ZONES.length - 1 ? (local - 0.84) / 0.16 : 0;
-    return { key: zone.key, local, next: ZONES[index + 1]?.key ?? null, blend: clamp(blend, 0, 1) };
+    const blend = local > 0.84 && safeIndex < ZONES.length - 1 ? (local - 0.84) / 0.16 : 0;
+    return {
+      key: zone.key,
+      local,
+      next: ZONES[safeIndex + 1]?.key ?? null,
+      blend: clamp(blend, 0, 1),
+    };
   }
 
   function pixelBubble(x, y, size, alpha) {
@@ -104,7 +128,9 @@
       rect(x + 34, 469, 38, 7, "#347e84", alpha * 0.58);
       rect(x + 43, 463, 20, 6, "#78c9c5", alpha * 0.5);
       for (let i = 0; i < 4; i += 1) {
-        const rise = reducedMotion ? i * 64 : (tick * (0.018 + i * 0.002) + i * 67 + x * 0.21) % 360;
+        const rise = reducedMotion
+          ? i * 64
+          : (tick * (0.018 + i * 0.002) + i * 67 + x * 0.21) % 360;
         const bx = x + 45 + (i % 2) * 18;
         const by = 454 - rise;
         if (by > 78 && by < 468) pixelBubble(bx, by, 8 + (i % 3) * 2, alpha * 0.62);
@@ -185,7 +211,14 @@
     rect(x + 8, y + 8, 32, 4, "#74cbd0", alpha * 0.5);
     const bars = 1 + Math.round(clamp(pressure, 0, 1) * 3);
     for (let i = 0; i < 4; i += 1) {
-      rect(x + 9 + i * 8, y + 18, 5, 7, i < bars ? (bars >= 4 ? "#efb24f" : "#73d2b5") : "#0a2634", alpha * 0.9);
+      rect(
+        x + 9 + i * 8,
+        y + 18,
+        5,
+        7,
+        i < bars ? (bars >= 4 ? "#efb24f" : "#73d2b5") : "#0a2634",
+        alpha * 0.9,
+      );
     }
   }
 
@@ -229,27 +262,52 @@
     else drawReservoir(tick, alpha, camera, debug);
   }
 
-  function draw(tick) {
-    const debug = typeof window.__shallStage4Debug === "function" ? window.__shallStage4Debug() : null;
-    if (!debug || debug.mode !== "play") {
-      previousMode = debug?.mode ?? null;
-      previousTick = tick;
-      requestAnimationFrame(draw);
-      return;
-    }
+  function drawZoneFrame() {
+    const debug = typeof window.__shallStage4Debug === "function"
+      ? window.__shallStage4Debug()
+      : null;
+    if (!debug || debug.mode !== "play") return;
 
     const heroX = debug.hero?.x ?? 0;
-    const camera = cameraFor(debug, tick);
+    const camera = cameraFor(debug);
     const zone = zoneAt(heroX);
+    const tick = performance.now();
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     drawZone(zone.key, tick, 1 - zone.blend * 0.72, camera, debug);
-    if (zone.next && zone.blend > 0) drawZone(zone.next, tick, zone.blend * 0.72, camera, debug);
+    if (zone.next && zone.blend > 0) {
+      drawZone(zone.next, tick, zone.blend * 0.72, camera, debug);
+    }
     ctx.restore();
-
-    requestAnimationFrame(draw);
   }
 
-  requestAnimationFrame(draw);
+  function zoneParityDrawImage(...args) {
+    const isFar = this.canvas?.id === "stage4-canvas" && matchesSource(args, FAR);
+    const isMid = this.canvas?.id === "stage4-canvas" && matchesSource(args, MID);
+
+    if (isFar) {
+      const dx = Number(args[5]);
+      const dw = Number(args[7]);
+      if (Number.isFinite(dx) && Number.isFinite(dw) && dx <= -dw) {
+        zoneDrawnThisFrame = false;
+      }
+    }
+
+    const result = previousDrawImage.apply(this, args);
+
+    if (isMid && !zoneDrawnThisFrame) {
+      const dx = Number(args[5]);
+      if (Number.isFinite(dx) && dx >= W) {
+        zoneDrawnThisFrame = true;
+        drawZoneFrame();
+      }
+    }
+
+    return result;
+  }
+
+  zoneParityDrawImage.__shallStage4ZoneParity = true;
+  proto.drawImage = zoneParityDrawImage;
+  proto.__shallStage4ZoneParityInstalled = true;
 })();

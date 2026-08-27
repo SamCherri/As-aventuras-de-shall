@@ -1,14 +1,29 @@
 (() => {
   "use strict";
 
+  /*
+   * Fase 4 — composição de cena alinhada às Fases 1–3.
+   *
+   * Nas fases-base, watcher, arquitetura e grandes oclusores entram no pipeline
+   * antes de inimigos, projéteis e Shall. Esta camada usa o mesmo princípio:
+   * injeta a composição ambiental logo após o midground nativo da Fase 4,
+   * em vez de redesenhar tudo em um requestAnimationFrame independente sobre
+   * a gameplay. Assim o cenário continua rico sem "lavar" personagens/ataques.
+   */
+
   const canvas = document.querySelector("#stage4-canvas");
-  if (!canvas) return;
+  const proto = window.CanvasRenderingContext2D?.prototype;
+  if (!canvas || !proto || proto.__shallStage4SceneParityInstalled) return;
+
   const ctx = canvas.getContext("2d");
+  const previousDrawImage = proto.drawImage;
   const W = canvas.width;
-  const H = canvas.height;
   const WORLD_END = 6100;
   const BOSS_START = 5450;
   const ARENA_LEFT = 5580;
+
+  const FAR = { sx: 0, sy: 0, sw: 133, sh: 44 };
+  const MID = { sx: 0, sy: 46, sw: 133, sh: 44 };
 
   const ART_PARTS = Array.from({ length: 14 }, (_, i) =>
     `./assets/stage4/art-atlas.b64.${String(i).padStart(2, "0")}.txt?v=40`
@@ -23,6 +38,7 @@
 
   let watcherAtlas = null;
   let watcherArtReady = false;
+  let sceneDrawnThisFrame = false;
 
   const props = [
     { x: 760, kind: "support", label: "CANAL 04" },
@@ -33,8 +49,21 @@
     { x: 5480, kind: "gate", label: "RESERVATÓRIO" },
   ];
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+  function matchesSource(args, source) {
+    return args.length === 9 &&
+      args[1] === source.sx && args[2] === source.sy &&
+      args[3] === source.sw && args[4] === source.sh;
+  }
+
+  function cameraFor(debug) {
+    const parity = typeof window.__shallStage4CameraParity === "function"
+      ? window.__shallStage4CameraParity()
+      : null;
+    if (Number.isFinite(parity?.camera)) return parity.camera;
+    const heroX = debug?.hero?.x ?? 0;
+    return clamp(debug?.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
   }
 
   async function loadWatcherArt() {
@@ -68,8 +97,9 @@
   }
 
   function rect(x, y, w, h, color, alpha = 1) {
+    if (w <= 0 || h <= 0 || alpha <= 0) return;
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha *= alpha;
     ctx.fillStyle = color;
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
     ctx.restore();
@@ -154,7 +184,7 @@
     if (!watcherArtReady || !watcherAtlas) return false;
     const [sx, sy, sw, sh] = atlasSource(source);
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha *= alpha;
     ctx.imageSmoothingEnabled = false;
     ctx.filter = "saturate(1.12) contrast(1.06) brightness(.82)";
     ctx.drawImage(watcherAtlas, sx, sy, sw, sh, Math.round(x), Math.round(y), Math.round(w), Math.round(h));
@@ -171,7 +201,12 @@
 
     const progress = clamp((heroX - start) / (end - start), 0, 1);
     const idleFrame = Math.floor(tick * 0.0024) % 2 ? POTAVIO.idleA : POTAVIO.idleB;
-    const frame = progress < 0.38 ? idleFrame : progress < 0.72 ? POTAVIO.aim : (Math.floor(tick * 0.004) % 2 ? POTAVIO.sneeze : POTAVIO.aim);
+    const frame = progress < 0.38
+      ? idleFrame
+      : progress < 0.72
+        ? POTAVIO.aim
+        : (Math.floor(tick * 0.004) % 2 ? POTAVIO.sneeze : POTAVIO.aim);
+
     const watcherW = 238 + progress * 48;
     const watcherH = 324 + progress * 54;
     const watcherX = W / 2 - watcherW / 2 + Math.sin(tick * 0.0011) * 6;
@@ -196,7 +231,6 @@
     rect(apertureX, apertureY, apertureW, apertureH, "#063451", 0.12);
     ctx.restore();
 
-    // Estrutura frontal: a moldura passa na frente do boss, como os watchers das Fases 1–3.
     rect(apertureX - 14, apertureY - 10, apertureW + 28, 14, "#031824", 0.96);
     rect(apertureX - 14, apertureY + apertureH - 4, apertureW + 28, 16, "#031824", 0.96);
     rect(apertureX - 14, apertureY - 2, 14, apertureH + 8, "#041d2b", 0.96);
@@ -221,9 +255,8 @@
   }
 
   function edgeReef() {
-    // Foreground edge framing analogous to the large occluders used in Fases 1–3,
-    // but kept outside the central combat/readability corridor.
-    rect(0, 438, 480, 66, "#031925", 0.18);
+    // A moldura permanece nas margens, mas agora fica atrás da camada de gameplay.
+    rect(0, 438, W, 66, "#031925", 0.18);
     for (let x = 8; x < W; x += 74) {
       const h = 18 + ((x / 74) % 3) * 8;
       rect(x, 504 - h, 9, h, "#0c4a4e", 0.6);
@@ -232,18 +265,14 @@
     }
   }
 
-  function draw(tick) {
-    const debug = typeof window.__shallStage4Debug === "function" ? window.__shallStage4Debug() : null;
-    if (!debug || debug.mode !== "play") {
-      requestAnimationFrame(draw);
-      return;
-    }
+  function drawSceneFrame() {
+    const debug = typeof window.__shallStage4Debug === "function"
+      ? window.__shallStage4Debug()
+      : null;
+    if (!debug || debug.mode !== "play") return;
 
-    const heroX = debug.hero?.x ?? 0;
-    const bossActive = Boolean(debug.boss?.active);
-    const camera = bossActive
-      ? ARENA_LEFT
-      : clamp(heroX - W * 0.3, 0, WORLD_END - W);
+    const tick = performance.now();
+    const camera = cameraFor(debug);
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
@@ -260,9 +289,36 @@
 
     edgeReef();
     ctx.restore();
-    requestAnimationFrame(draw);
   }
 
+  function sceneParityDrawImage(...args) {
+    const isFar = this.canvas?.id === "stage4-canvas" && matchesSource(args, FAR);
+    const isMid = this.canvas?.id === "stage4-canvas" && matchesSource(args, MID);
+
+    if (isFar) {
+      const dx = Number(args[5]);
+      const dw = Number(args[7]);
+      if (Number.isFinite(dx) && Number.isFinite(dw) && dx <= -dw) {
+        sceneDrawnThisFrame = false;
+      }
+    }
+
+    const result = previousDrawImage.apply(this, args);
+
+    if (isMid && !sceneDrawnThisFrame) {
+      const dx = Number(args[5]);
+      if (Number.isFinite(dx) && dx >= W) {
+        sceneDrawnThisFrame = true;
+        drawSceneFrame();
+      }
+    }
+
+    return result;
+  }
+
+  sceneParityDrawImage.__shallStage4SceneParity = true;
+  proto.drawImage = sceneParityDrawImage;
+  proto.__shallStage4SceneParityInstalled = true;
+
   loadWatcherArt();
-  requestAnimationFrame(draw);
 })();
