@@ -48,6 +48,15 @@
     );
   }
 
+  function visibleOnCanvas(ctx, x, w) {
+    const transform = typeof ctx.getTransform === "function" ? ctx.getTransform() : null;
+    const offsetX = transform?.e ?? 0;
+    const screenLeft = x + offsetX;
+    const screenRight = screenLeft + w;
+    const canvasWidth = ctx.canvas?.width ?? 480;
+    return screenRight >= -24 && screenLeft <= canvasWidth + 24;
+  }
+
   function px(ctx, x, y, w, h, color, alpha = 1) {
     ctx.save();
     ctx.globalAlpha *= alpha;
@@ -154,7 +163,7 @@
     if (this.canvas?.id !== "stage4-canvas") return result;
 
     const index = matchesReef(x, y, w, h);
-    if (index < 0) return result;
+    if (index < 0 || !visibleOnCanvas(this, x, w)) return result;
 
     finishReef(this, x, y, w, h, index);
     return result;
