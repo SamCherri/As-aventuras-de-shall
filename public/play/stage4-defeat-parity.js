@@ -30,6 +30,8 @@
 
   let deadSince = 0;
   let wasDead = false;
+  let deadAnchorX = null;
+  let deadAnchorBottomY = null;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const easeOut = (t) => 1 - (1 - t) * (1 - t);
@@ -172,25 +174,29 @@
     if (!dead) {
       wasDead = false;
       deadSince = 0;
+      deadAnchorX = null;
+      deadAnchorBottomY = null;
       return previousDrawImage.call(this, image, ...args);
     }
 
     if (!wasDead) {
       wasDead = true;
       deadSince = now;
+      deadAnchorX = dx + dw / 2;
+      deadAnchorBottomY = dy + dh;
     }
 
     const progress = clamp((now - deadSince) / 1700, 0, 1);
     const frame = frameFor(progress);
     const profile = profileFor(progress, now);
-    const centerX = dx + dw / 2;
-    const bottomY = dy + dh;
+    const centerX = deadAnchorX ?? dx + dw / 2;
+    const bottomY = deadAnchorBottomY ?? dy + dh;
     const drawW = Math.max(28, Math.abs(dw) * profile.scaleX);
     const drawH = Math.max(22, Math.abs(dh) * profile.scaleY);
     const drawX = centerX - drawW / 2 + profile.x;
     const drawY = bottomY - drawH + profile.y;
 
-    pressureRelease(this, centerX, dy + dh * 0.44, Math.abs(dw), Math.abs(dh), progress);
+    pressureRelease(this, centerX, bottomY - Math.abs(dh) * 0.56, Math.abs(dw), Math.abs(dh), progress);
     waterLeaks(this, centerX, bottomY, Math.abs(dw), Math.abs(dh), progress, now);
 
     const result = previousDrawImage.call(
