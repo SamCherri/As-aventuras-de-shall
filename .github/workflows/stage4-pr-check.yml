@@ -26,6 +26,7 @@ jobs:
           node --test tests/play-smoke.test.mjs
           node --check public/play/stage4-sprite-fidelity.js
           node --check public/play/stage4-backdrop-parity.js
+          node --check public/play/stage4-scene-parity.js
           node --check public/play/stage4-hero-motion-parity.js
           node --check public/play/stage4-transform-parity.js
           node --check public/play/stage4-canonical-art-parity.js
