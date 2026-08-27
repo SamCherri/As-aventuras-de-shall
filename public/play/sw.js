@@ -12,6 +12,7 @@ const SHELL = [
   "./stage4-canonical-art.css?v=1",
   "./stage4-backdrop-parity.js?v=1",
   "./stage4.js?v=40",
+  "./stage4-context-parity.js?v=1",
   "./stage4-sprite-fidelity.js?v=1",
   "./stage4-canonical-art-parity.js?v=1",
   "./stage4-camera-parity.js?v=1",
