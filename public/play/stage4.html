@@ -14,12 +14,16 @@
     <link rel="stylesheet" href="./stage4.css?v=39" />
     <link rel="stylesheet" href="./stage4-arena-depth.css?v=1" />
     <link rel="stylesheet" href="./stage4-parity.css?v=2" />
+    <link rel="stylesheet" href="./stage4-canonical-art.css?v=1" />
   </head>
   <body class="stage4-body">
     <main class="game-app stage4-app" id="stage4-app">
       <header class="hud stage4-hud" aria-label="Informações da fase aquática">
         <div class="hero-status">
-          <div class="hero-portrait stage4-portrait" aria-hidden="true"><span class="pixel-shell-icon compact"></span></div>
+          <div class="hero-portrait stage4-portrait" aria-hidden="true">
+            <span class="pixel-shell-icon compact"></span>
+            <canvas class="stage4-hero-portrait-art" id="stage4-hero-portrait-art" width="64" height="64"></canvas>
+          </div>
           <div class="life-wrap">
             <span>SHALL MEXILHÃOZINHO</span>
             <div class="life-track" aria-label="Energia de Shall"><div class="life-fill" id="stage4-life-fill"></div></div>
@@ -58,13 +62,19 @@
         <section class="screen-layer stage4-intro" id="stage4-intro">
           <div class="stage4-intro-art" aria-hidden="true">
             <div class="intro-bubbles"></div>
-            <div class="intro-mexilhao"><span class="pixel-shell-icon"></span></div>
-            <div class="intro-potavio"><span class="pixel-drop-icon"></span></div>
+            <div class="intro-mexilhao">
+              <span class="pixel-shell-icon"></span>
+              <img class="stage4-intro-shall-canonical" src="./assets/shall-short-neck-idle.png" alt="" />
+            </div>
+            <div class="intro-potavio">
+              <span class="pixel-drop-icon"></span>
+              <canvas class="stage4-intro-potavio-art" id="stage4-intro-potavio-art" width="128" height="160"></canvas>
+            </div>
           </div>
           <div class="stage4-intro-copy">
             <p>FASE 4 · MERGULHO 32-BIT</p>
             <h1>ÁGUA <span>pOtÁVIO</span></h1>
-            <strong>SHALL MEXILHÃOZINHO</strong>
+            <strong>SHALL → MEXILHÃOZINHO</strong>
             <p class="stage4-intro-text">A água muda tudo: Shall afunda, sofre com correntezas, nada em qualquer altura e precisa chegar ao reservatório do Água pOtávio.</p>
             <button class="pixel-button primary" id="stage4-start" type="button">MERGULHAR ▶</button>
             <a class="stage4-back-link" href="./index.html">VOLTAR ÀS FASES</a>
@@ -106,6 +116,7 @@
     <script src="./stage4-backdrop-parity.js?v=1"></script>
     <script src="./stage4.js?v=40"></script>
     <script src="./stage4-sprite-fidelity.js?v=1"></script>
+    <script src="./stage4-canonical-art-parity.js?v=1"></script>
     <script src="./stage4-camera-parity.js?v=1"></script>
     <script src="./stage4-hero-parity.js?v=1"></script>
     <script src="./stage4-hero-motion-parity.js?v=1"></script>
