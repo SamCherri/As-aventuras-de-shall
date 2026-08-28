@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v43-character-density-8x";
+const CACHE = "shall-aventuras-v43-native-reef-materials";
 const SHELL = [
   "./",
   "./index.html",
