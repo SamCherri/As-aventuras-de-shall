@@ -5,6 +5,7 @@ on:
     paths:
       - "public/play/**"
       - "tests/play-smoke.test.mjs"
+      - "tests/stage4-boss-arena-parity.test.mjs"
       - ".github/workflows/stage4-pr-check.yml"
 
 permissions:
@@ -23,7 +24,7 @@ jobs:
           node-version: "22"
       - name: Validar sintaxe e referências
         run: |
-          node --test tests/play-smoke.test.mjs
+          node --test tests/play-smoke.test.mjs tests/stage4-boss-arena-parity.test.mjs
           node --check public/play/stage4-sprite-fidelity.js
           node --check public/play/stage4-backdrop-parity.js
           node --check public/play/stage4-scene-parity.js
@@ -33,3 +34,4 @@ jobs:
           node --check public/play/stage4-canonical-art-parity.js
           node --check public/play/stage4-defeat-parity.js
           node --check public/play/stage4-foreground-parity.js
+          node --check public/play/stage4-boss-arena-parity.js
