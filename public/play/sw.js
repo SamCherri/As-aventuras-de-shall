@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v43-boss-arena-worldspace";
+const CACHE = "shall-aventuras-v43-character-density-8x";
 const SHELL = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const SHELL = [
   "./stage4.js?v=40",
   "./stage4-context-parity.js?v=1",
   "./stage4-sprite-fidelity.js?v=2",
+  "./stage4-character-density-parity.js?v=1",
   "./stage4-canonical-art-parity.js?v=1",
   "./stage4-camera-parity.js?v=1",
   "./stage4-hero-parity.js?v=1",
