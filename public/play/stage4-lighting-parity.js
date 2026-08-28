@@ -1,9 +1,34 @@
 (() => {
   "use strict";
 
+  /*
+   * Fase 4 — iluminação sincronizada com o pipeline das Fases 1–3.
+   *
+   * Nas três fases-base, backdrop, personagens, foreground e atmosfera são
+   * compostos dentro do MESMO draw() por frame. A Fase 4 mantinha este passe de
+   * iluminação em um requestAnimationFrame independente sobre o mesmo canvas.
+   * Isso permitia que grade, fachos e luz da arena fossem pintados entre dois
+   * frames do gameplay, por cima de Shall/inimigos/projéteis, gerando leitura
+   * mais lavada e risco de pulsação/overdraw no celular.
+   *
+   * Este módulo passa a usar o boundary de render já exposto pelo core: o primeiro
+   * translate horizontal do mundo ocorre logo depois de backdrop() e antes de
+   * currents/recifes/personagens. A iluminação é desenhada uma única vez nesse
+   * ponto, em coordenadas de tela, e então o renderer continua normalmente.
+   *
+   * O core da Fase 4 já aplica sua vinheta final após o foreground; por isso a
+   * segunda vinheta deste módulo foi removida. Resultado: ambiente continua com
+   * profundidade aquática, mas sprites e VFX não recebem uma segunda película.
+   * Nenhum estado de gameplay é escrito ou alterado.
+   */
+
   const canvas = document.querySelector("#stage4-canvas");
-  if (!canvas) return;
+  const proto = window.CanvasRenderingContext2D?.prototype;
+  if (!canvas || !proto || proto.__shallStage4LightingParityInstalled) return;
+
   const ctx = canvas.getContext("2d");
+  const previousSetTransform = proto.setTransform;
+  const previousTranslate = proto.translate;
   const W = canvas.width;
   const H = canvas.height;
   const WORLD_END = 6100;
@@ -12,30 +37,48 @@
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   let visualCamera = 0;
+  let visualLift = 0;
   let previousCameraTick = performance.now();
   let previousMode = null;
+  let frameArmed = false;
+  let lightingDrawn = false;
+
+  function debugState() {
+    return typeof window.__shallStage4Debug === "function"
+      ? window.__shallStage4Debug()
+      : null;
+  }
 
   function cameraFor(debug, tick) {
     const heroX = debug.hero?.x ?? 0;
-    const target = clamp(debug.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
+    const parity = typeof window.__shallStage4CameraParity === "function"
+      ? window.__shallStage4CameraParity()
+      : null;
+    const target = Number.isFinite(parity?.camera)
+      ? parity.camera
+      : clamp(debug.boss?.active ? ARENA_LEFT : heroX - W * 0.3, 0, WORLD_END - W);
+    const targetLift = Number.isFinite(parity?.lift) ? parity.lift : 0;
     const dt = clamp((tick - previousCameraTick) / 1000, 0, 0.033);
     previousCameraTick = tick;
 
-    // Espelha a interpolação usada pelo core da Fase 4 em update():
-    // camera += (target - camera) * min(1, dt * 4.5).
-    // Assim o foco de luz acompanha a câmera suavizada, não o alvo instantâneo.
-    if (previousMode !== "play") visualCamera = 0;
-    visualCamera += (target - visualCamera) * Math.min(1, dt * 4.5);
+    // Mantém suavização própria somente para o foco de luz. O alvo vem da câmera
+    // visual compartilhada, então look-ahead e lift não ficam um frame espacialmente
+    // desconectados do enquadramento do Shall.
+    if (previousMode !== "play") {
+      visualCamera = target;
+      visualLift = targetLift;
+    } else {
+      visualCamera += (target - visualCamera) * Math.min(1, dt * 4.5);
+      visualLift += (targetLift - visualLift) * Math.min(1, dt * 5.2);
+    }
     previousMode = debug.mode;
-    return visualCamera;
+    return { camera: visualCamera, lift: visualLift };
   }
 
   function worldGrade(debug) {
     const heroX = debug.hero?.x ?? 0;
     const progress = clamp(heroX / WORLD_END, 0, 1);
 
-    // Fases 1–3 mudam a leitura da cena por trecho/arena; a Fase 4 agora também
-    // ganha progressão tonal em vez de manter o mesmo banho azul do início ao fim.
     const gradient = ctx.createLinearGradient(0, 0, 0, H);
     gradient.addColorStop(0, `rgba(8, 88, 116, ${0.025 + progress * 0.025})`);
     gradient.addColorStop(0.52, `rgba(3, 44, 76, ${0.018 + progress * 0.04})`);
@@ -75,14 +118,14 @@
   }
 
   function heroFocus(debug, tick) {
-    const camera = cameraFor(debug, tick);
+    const view = cameraFor(debug, tick);
     const hero = debug.hero;
     if (!hero) return;
-    const x = clamp(hero.x - camera + 27, 24, W - 24);
-    const y = clamp(hero.y + 34, 72, H - 52);
+    const x = clamp(hero.x - view.camera + 27, 24, W - 24);
+    const y = clamp(hero.y + view.lift + 34, 72, H - 52);
 
-    // Mesmo princípio dos glows radiais das arenas das Fases 1–3: o personagem
-    // vence o fundo localmente sem receber outline artificial nem alterar sprite.
+    // Glow fica ATRÁS do personagem, como parte do ambiente, em vez de aplicar
+    // uma película clara sobre o sprite já renderizado.
     ctx.save();
     ctx.globalCompositeOperation = "screen";
     const glow = ctx.createRadialGradient(x, y, 8, x, y, 118);
@@ -101,8 +144,6 @@
     const pulse = reducedMotion ? 0 : Math.sin(tick * 0.0045) * 0.018;
     const pressure = 1 - water / 100;
 
-    // As arenas de Joyce/Rock usam pulse glow específico de boss. Aqui a fonte
-    // fica à direita, junto do Água pOtávio, e muda conforme galão/nível.
     ctx.save();
     ctx.globalCompositeOperation = "screen";
     const bossGlow = ctx.createRadialGradient(W - 74, 220, 18, W - 74, 220, 270);
@@ -131,37 +172,69 @@
     ctx.restore();
   }
 
-  function readabilityVignette() {
-    // O core já possui vinheta; este segundo passe é mais leve e roda depois dos
-    // props/oclusores de paridade, integrando-os à mesma profundidade da cena.
-    const vignette = ctx.createRadialGradient(W / 2, H * 0.48, 150, W / 2, H * 0.48, 380);
-    vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
-    vignette.addColorStop(0.72, "rgba(0, 8, 20, .035)");
-    vignette.addColorStop(1, "rgba(0, 6, 18, .11)");
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  function draw(tick) {
-    const debug = typeof window.__shallStage4Debug === "function" ? window.__shallStage4Debug() : null;
-    if (!debug || debug.mode !== "play") {
-      previousMode = debug?.mode ?? null;
-      previousCameraTick = tick;
-      requestAnimationFrame(draw);
-      return;
-    }
-
+  function drawLighting(debug, tick) {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     worldGrade(debug);
     surfaceShafts(tick, debug);
     heroFocus(debug, tick);
     arenaLighting(tick, debug);
-    readabilityVignette();
     ctx.restore();
-
-    requestAnimationFrame(draw);
   }
 
-  requestAnimationFrame(draw);
+  function isIdentityReset(args) {
+    return args.length >= 6 &&
+      args[0] === 1 && args[1] === 0 && args[2] === 0 &&
+      args[3] === 1 && args[4] === 0 && args[5] === 0;
+  }
+
+  function lightingSetTransform(...args) {
+    const result = previousSetTransform.apply(this, args);
+    if (this.canvas?.id === "stage4-canvas" && isIdentityReset(args)) {
+      frameArmed = true;
+      lightingDrawn = false;
+    }
+    return result;
+  }
+
+  function lightingTranslate(x, y) {
+    if (
+      this.canvas?.id === "stage4-canvas" &&
+      frameArmed &&
+      !lightingDrawn &&
+      Number.isFinite(x) &&
+      Number.isFinite(y) &&
+      Math.abs(y) < 0.0001 &&
+      x <= 0
+    ) {
+      const debug = debugState();
+      const transform = this.getTransform?.();
+      const screenSpaceReady = !transform || (
+        Math.abs(transform.a - 1) < 0.001 &&
+        Math.abs(transform.d - 1) < 0.001 &&
+        Math.abs(transform.b) < 0.001 &&
+        Math.abs(transform.c) < 0.001
+      );
+
+      if (debug?.mode === "play" && screenSpaceReady) {
+        lightingDrawn = true;
+        frameArmed = false;
+        drawLighting(debug, performance.now());
+      }
+    }
+
+    return previousTranslate.call(this, x, y);
+  }
+
+  proto.setTransform = lightingSetTransform;
+  proto.translate = lightingTranslate;
+  proto.__shallStage4LightingParityInstalled = true;
+
+  window.__shallStage4LightingParity = Object.freeze({
+    pipeline: "synchronous-pre-gameplay",
+    independentAnimationLoop: false,
+    duplicateVignette: false,
+    cameraSource: "shared-camera-parity",
+    gameplayWrites: false,
+  });
 })();
