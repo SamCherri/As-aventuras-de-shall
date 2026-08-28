@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v43-stage4-intro-comic";
+const CACHE = "shall-aventuras-v43-boss-arena-worldspace";
 const SHELL = [
   "./",
   "./index.html",
