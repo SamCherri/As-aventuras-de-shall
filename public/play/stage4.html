@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./stage4.css?v=39" />
     <link rel="stylesheet" href="./stage4-parity.css?v=2" />
     <link rel="stylesheet" href="./stage4-canonical-art.css?v=1" />
+    <link rel="stylesheet" href="./stage4-intro-parity.css?v=1" />
   </head>
   <body class="stage4-body">
     <main class="game-app stage4-app" id="stage4-app">
@@ -58,8 +59,8 @@
 
         <div class="toast" id="stage4-toast" hidden></div>
 
-        <section class="screen-layer stage4-intro" id="stage4-intro">
-          <div class="stage4-intro-art" aria-hidden="true">
+        <section class="screen-layer story-layer stage4-intro" id="stage4-intro">
+          <div class="comic-panel stage4-intro-art" aria-hidden="true">
             <div class="intro-bubbles"></div>
             <div class="intro-mexilhao">
               <span class="pixel-shell-icon"></span>
@@ -69,14 +70,19 @@
               <span class="pixel-drop-icon"></span>
               <canvas class="stage4-intro-potavio-art" id="stage4-intro-potavio-art" width="128" height="160"></canvas>
             </div>
+            <div class="stage4-intro-panel-title">
+              <small>FASE 4 · RESERVATÓRIO</small>
+              <strong>ÁGUA <span>pOtÁVIO</span></strong>
+            </div>
           </div>
-          <div class="stage4-intro-copy">
-            <p>FASE 4 · MERGULHO 32-BIT</p>
-            <h1>ÁGUA <span>pOtÁVIO</span></h1>
+          <div class="dialogue-box stage4-intro-copy">
+            <span>NARRADOR</span>
+            <p class="stage4-intro-text">Shall seguiu os canos até o reservatório. Agora a água muda tudo: ele afunda, enfrenta correntezas e precisa chegar ao Água pOtávio.</p>
             <strong>SHALL → MEXILHÃOZINHO</strong>
-            <p class="stage4-intro-text">A água muda tudo: Shall afunda, sofre com correntezas, nada em qualquer altura e precisa chegar ao reservatório do Água pOtávio.</p>
-            <button class="pixel-button primary" id="stage4-start" type="button">MERGULHAR ▶</button>
-            <a class="stage4-back-link" href="./index.html">VOLTAR ÀS FASES</a>
+            <div class="story-actions stage4-intro-actions">
+              <a class="stage4-back-link" href="./index.html">VOLTAR ÀS FASES</a>
+              <button class="pixel-button primary" id="stage4-start" type="button">MERGULHAR ▶</button>
+            </div>
           </div>
         </section>
 

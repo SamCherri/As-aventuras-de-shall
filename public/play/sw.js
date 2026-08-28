@@ -9,6 +9,7 @@ const SHELL = [
   "./stage4.css?v=39",
   "./stage4-parity.css?v=2",
   "./stage4-canonical-art.css?v=1",
+  "./stage4-intro-parity.css?v=1",
   "./stage4-backdrop-parity.js?v=1&material=2",
   "./stage4.js?v=40",
   "./stage4-context-parity.js?v=1",

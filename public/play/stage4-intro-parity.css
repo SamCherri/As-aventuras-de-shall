@@ -1,0 +1,223 @@
+/*
+ * Fase 4 — abertura normalizada com a gramática visual das Fases 1–3.
+ *
+ * A tela deixa de funcionar como um title card independente e passa a reutilizar
+ * a composição já provada no jogo-base: comic-panel + dialogue-box + story-actions.
+ * A paleta continua aquática, mas moldura, hierarquia, escala dos personagens,
+ * contraste e leitura no celular seguem a mesma família visual do restante do jogo.
+ */
+
+.stage4-intro.story-layer {
+  grid-template-rows: minmax(0, 1fr) auto;
+  place-items: stretch;
+  padding: 11px;
+  background: #070914;
+  color: var(--cream);
+}
+
+.stage4-intro .stage4-intro-art.comic-panel {
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border: 4px solid var(--cream);
+  background:
+    linear-gradient(180deg, rgba(8, 25, 54, .04), rgba(3, 20, 42, .18)),
+    linear-gradient(#0b5275 0 54%, #0a3d5c 54% 76%, #07182d 76%);
+  box-shadow: 5px 5px 0 #31516d;
+  isolation: isolate;
+}
+
+/* Midground industrial: apenas moldura de leitura. A arte canônica dos dois
+ * personagens continua sendo o foco, como nos quadros narrativos das fases-base. */
+.stage4-intro .stage4-intro-art.comic-panel::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 31% 0 18%;
+  background:
+    repeating-linear-gradient(90deg,
+      #0a2a43 0 48px,
+      #123d58 48px 84px,
+      #0a2942 84px 134px);
+  border-top: 4px solid rgba(105, 232, 244, .18);
+  border-bottom: 4px solid rgba(3, 14, 30, .52);
+  opacity: .94;
+}
+
+.stage4-intro .stage4-intro-art.comic-panel::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: -4%;
+  right: -4%;
+  bottom: -7%;
+  height: 29%;
+  border-top: 7px solid #2f7380;
+  background:
+    repeating-linear-gradient(115deg,
+      #153b48 0 34px,
+      #0d2b3a 34px 64px);
+  box-shadow: inset 0 7px 0 rgba(115, 220, 232, .12);
+  clip-path: none;
+}
+
+.stage4-intro .intro-bubbles {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .72;
+  background:
+    radial-gradient(circle at 12% 23%, rgba(217, 251, 255, .88) 0 2px, transparent 3px),
+    radial-gradient(circle at 24% 48%, rgba(217, 251, 255, .62) 0 3px, transparent 4px),
+    radial-gradient(circle at 46% 18%, rgba(217, 251, 255, .72) 0 2px, transparent 3px),
+    radial-gradient(circle at 69% 38%, rgba(217, 251, 255, .72) 0 3px, transparent 4px),
+    radial-gradient(circle at 84% 17%, rgba(217, 251, 255, .84) 0 2px, transparent 3px),
+    radial-gradient(circle at 91% 59%, rgba(217, 251, 255, .58) 0 4px, transparent 5px);
+}
+
+/* Os personagens deixam de morar em cards separados. Eles passam a dividir o
+ * mesmo quadro, como Shall/Cleyde e os watchers/chefes nas Fases 1–3. */
+.stage4-intro .intro-mexilhao,
+.stage4-intro .intro-potavio {
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  clip-path: none;
+  image-rendering: pixelated;
+}
+
+.stage4-intro .intro-mexilhao {
+  left: 4%;
+  top: auto;
+  bottom: 2%;
+  width: 42%;
+  height: 78%;
+  transform: rotate(-1deg);
+}
+
+.stage4-intro .intro-potavio {
+  right: 1%;
+  top: auto;
+  bottom: 1%;
+  width: 47%;
+  height: 82%;
+  transform: rotate(1deg);
+}
+
+.stage4-intro-panel-title {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  gap: 3px;
+  max-width: 62%;
+  padding: 7px 9px 8px;
+  border: 3px solid var(--cream);
+  background: rgba(8, 12, 31, .92);
+  box-shadow: 3px 3px 0 rgba(1, 7, 18, .72);
+  text-align: left;
+}
+
+.stage4-intro-panel-title small {
+  color: var(--cyan);
+  font: 900 8px/1 monospace;
+  letter-spacing: .12em;
+}
+
+.stage4-intro-panel-title strong {
+  color: #fff3ca;
+  font: 900 clamp(20px, 6vw, 27px)/.9 monospace;
+  letter-spacing: -.05em;
+  text-shadow: 3px 3px 0 #075d83;
+}
+
+.stage4-intro-panel-title strong span {
+  color: #69e8f4;
+}
+
+.stage4-intro .stage4-intro-copy.dialogue-box {
+  margin-top: 12px;
+  padding: 12px;
+  border: 4px solid var(--cream);
+  background: #171b36;
+  box-shadow: 4px 4px 0 #31516d;
+  text-align: left;
+}
+
+.stage4-intro .stage4-intro-copy.dialogue-box > span {
+  display: block;
+  margin: 0;
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.stage4-intro .stage4-intro-copy .stage4-intro-text {
+  min-height: 0;
+  max-width: none;
+  margin: 5px 0 7px;
+  color: #fff7d8;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.stage4-intro .stage4-intro-copy > strong {
+  display: block;
+  margin: 0 0 10px;
+  color: #8fe6f3;
+  font: 900 9px/1 monospace;
+  letter-spacing: .08em;
+}
+
+.stage4-intro-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.stage4-intro-actions .stage4-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 4px;
+  color: #8d95b9;
+  font: 800 9px/1 monospace;
+  letter-spacing: .06em;
+  text-decoration: none;
+}
+
+.stage4-intro-actions .pixel-button {
+  min-width: min(48vw, 184px);
+  min-height: 42px;
+}
+
+/* Mantém a abertura legível na janela útil de celulares baixos, sem roubar
+ * espaço do gameplay nem alterar a grade global HUD/canvas/controles. */
+@media (max-height: 720px) {
+  .stage4-intro.story-layer { padding: 8px; }
+  .stage4-intro .stage4-intro-copy.dialogue-box { margin-top: 8px; padding: 9px 10px; }
+  .stage4-intro .stage4-intro-copy .stage4-intro-text { margin-bottom: 5px; font-size: 10px; line-height: 1.28; }
+  .stage4-intro .stage4-intro-copy > strong { margin-bottom: 7px; font-size: 8px; }
+  .stage4-intro-panel-title { top: 7px; left: 7px; padding: 6px 7px; }
+  .stage4-intro .intro-mexilhao { height: 75%; }
+  .stage4-intro .intro-potavio { height: 79%; }
+}
+
+@media (max-width: 380px) {
+  .stage4-intro-panel-title { max-width: 66%; }
+  .stage4-intro-panel-title strong { font-size: 20px; }
+  .stage4-intro .intro-mexilhao { left: 1%; width: 45%; }
+  .stage4-intro .intro-potavio { right: -2%; width: 49%; }
+  .stage4-intro-actions { gap: 7px; }
+  .stage4-intro-actions .pixel-button { min-width: 146px; padding-inline: 9px; font-size: 10px; }
+}
