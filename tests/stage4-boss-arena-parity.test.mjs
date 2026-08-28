@@ -14,7 +14,7 @@ test("Fase 4 troca profundidade CSS fixa por integração de arena no renderer",
   assert.doesNotMatch(html, /stage4-arena-depth\.css/);
   assert.match(sw, /stage4-boss-arena-parity\.js\?v=1/);
   assert.doesNotMatch(sw, /stage4-arena-depth\.css/);
-  assert.match(sw, /shall-aventuras-v44-boss-arena-worldspace/);
+  assert.match(sw, /shall-aventuras-v43-boss-arena-worldspace/);
 });
 
 test("apresentação do boss reutiliza gramática das Fases 1–3 sem mexer em gameplay", () => {
