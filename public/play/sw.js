@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v43-canonical-transform";
+const CACHE = "shall-aventuras-v43-boss-arena-worldspace";
 const SHELL = [
   "./",
   "./index.html",
@@ -7,7 +7,6 @@ const SHELL = [
   "./stage4-bridge.js?v=37",
   "./stage4.html",
   "./stage4.css?v=39",
-  "./stage4-arena-depth.css?v=1",
   "./stage4-parity.css?v=2",
   "./stage4-canonical-art.css?v=1",
   "./stage4-backdrop-parity.js?v=1&material=2",
@@ -29,6 +28,7 @@ const SHELL = [
   "./stage4-impact-parity.js?v=1",
   "./stage4-reveal-parity.js?v=1",
   "./stage4-foreground-parity.js?v=2",
+  "./stage4-boss-arena-parity.js?v=1",
   "./manifest.webmanifest",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
