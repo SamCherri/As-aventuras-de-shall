@@ -1,4 +1,4 @@
-const CACHE = "shall-aventuras-v43-lighting-sync";
+const CACHE = "shall-aventuras-v43-canonical-transform";
 const SHELL = [
   "./",
   "./index.html",
@@ -18,7 +18,7 @@ const SHELL = [
   "./stage4-camera-parity.js?v=1",
   "./stage4-hero-parity.js?v=1",
   "./stage4-hero-motion-parity.js?v=1",
-  "./stage4-transform-parity.js?v=1",
+  "./stage4-transform-parity.js?v=2",
   "./stage4-enemy-parity.js?v=2",
   "./stage4-boss-parity.js?v=1",
   "./stage4-defeat-parity.js?v=1",
