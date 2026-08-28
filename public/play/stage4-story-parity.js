@@ -2,15 +2,17 @@
   "use strict";
 
   /*
-   * Fase 4 — visual storytelling regional alinhado às Fases 1–3.
+   * Fase 4 — sinalização/humor ambiental alinhados às Fases 1–3.
    *
-   * As fases-base marcam cada trecho com landmarks grandes, placas engraçadas e
-   * props temáticos. A Fase 4 já tinha microambientes distintos, mas suas placas
-   * ainda eram quase todas técnicas. Este passe devolve a personalidade de Shall
-   * às transições sem tocar em física, colisões, IA, HP, controles ou rotas.
+   * As fases-base usam placas grandes e engraçadas (LANCHALL CROC, TÚNEL DO
+   * SUCO, FEIRA DO MEIO-DIA...) para dar personalidade ao cenário sem criar uma
+   * segunda arquitetura por cima da arte principal. Depois da consolidação dos
+   * landmarks da Fase 4, este módulo fica deliberadamente restrito à SINALIZAÇÃO:
+   * ele substitui visualmente as placas técnicas dos marcos nativos por placas
+   * de duas linhas com humor, preservando a arquitetura de stage4-scene-parity.
    *
-   * O desenho é injetado no final do midground nativo; portanto fica atrás da
-   * gameplay, exatamente como arquitetura e sinalização das Fases 1–3.
+   * É uma camada somente visual, inserida no fim do midground. Não escreve em
+   * física, hitboxes, HP, dano, IA, correntezas, controles, rotas ou timers.
    */
 
   const canvas = document.querySelector("#stage4-canvas");
@@ -27,14 +29,16 @@
   const FAR = { sx: 0, sy: 0, sw: 133, sh: 44 };
   const MID = { sx: 0, sy: 46, sw: 133, sh: 44 };
 
-  const LANDMARKS = [
-    { x: 360, kind: "canal", title: "CANAL 04", line: "BOIA NÃO INCLUSA" },
-    { x: 1080, kind: "bubbles", title: "BOLHA EXPRESS", line: "FAVOR NÃO ESTOURAR" },
-    { x: 2200, kind: "current", title: "CORRENTEZA 220V", line: "NÃO USE NA TOMADA" },
-    { x: 3400, kind: "shell", title: "MEXILHÃO VIP", line: "ENTRADA SÓ DE CONCHA" },
-    { x: 4540, kind: "reservoir", title: "ÁGUA pOtÁVIO", line: "QUASE POTÁVEL" },
-    { x: 5290, kind: "arena", title: "ARENA DO GALÃO", line: "NÃO APERTE A BARRIGA" },
-  ];
+  // Mesmas posições dos landmarks NATIVOS de stage4-scene-parity.
+  // O offset/y cobre a placa técnica já existente sem duplicar arquitetura.
+  const LANDMARKS = Object.freeze([
+    { x: 760,  centerOffset: 22, y: 176, width: 188, title: "CANAL 04",        line: "BOIA NÃO INCLUSA",      accent: "#86e2c7", icon: "buoy" },
+    { x: 1690, centerOffset: 10, y: 166, width: 206, title: "BOLHA EXPRESS",   line: "FAVOR NÃO ESTOURAR",    accent: "#7eeaf2", icon: "bubble" },
+    { x: 2860, centerOffset: 22, y: 176, width: 222, title: "CORRENTEZA 220V", line: "NÃO USE NA TOMADA",     accent: "#ffc94a", icon: "bolt" },
+    { x: 3970, centerOffset: 10, y: 166, width: 222, title: "MEXILHÃO VIP",    line: "ENTRADA SÓ DE CONCHA",  accent: "#d3a9cd", icon: "shell" },
+    { x: 4900, centerOffset: 22, y: 176, width: 206, title: "ÁGUA pOtÁVIO",    line: "QUASE POTÁVEL",         accent: "#75e6ef", icon: "drop" },
+    { x: 5480, centerOffset: 17, y: 80,  width: 224, title: "ARENA DO GALÃO",  line: "NÃO APERTE A BARRIGA",  accent: "#ffcf62", icon: "tank" },
+  ]);
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   let storyDrawnThisFrame = false;
@@ -69,135 +73,84 @@
     ctx.restore();
   }
 
-  function pixelText(text, x, y, size, color, align = "center") {
+  function text(textValue, x, y, size, color) {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.font = `900 ${size}px "Courier New", monospace`;
-    ctx.textAlign = align;
+    ctx.font = `900 ${size}px "Courier New", ui-monospace, monospace`;
+    ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#02101c";
-    ctx.fillText(text, Math.round(x + 2), Math.round(y + 2));
+    ctx.fillStyle = "#020912";
+    ctx.fillText(textValue, Math.round(x + 2), Math.round(y + 2));
     ctx.fillStyle = color;
-    ctx.fillText(text, Math.round(x), Math.round(y));
+    ctx.fillText(textValue, Math.round(x), Math.round(y));
     ctx.restore();
   }
 
-  function sign(screenX, y, title, line, accent = "#58d2e2", width = 188) {
-    const x = Math.round(screenX - width / 2);
-    rect(x + 6, y + 6, width, 58, "#010a13", 0.68);
-    rect(x, y, width, 58, "#031824", 0.98);
-    rect(x + 4, y + 4, width - 8, 50, "#163949", 0.98);
-    rect(x + 8, y + 8, width - 16, 5, accent, 0.82);
-    rect(x + 8, y + 46, width - 16, 4, "#061d2a", 0.92);
-    rect(x - 8, y + 18, 8, 22, "#03111c", 0.96);
-    rect(x + width, y + 18, 8, 22, "#03111c", 0.96);
-    pixelText(title, screenX, y + 25, title.length > 16 ? 10 : 12, "#fff0bf");
-    pixelText(line, screenX, y + 42, line.length > 19 ? 7 : 8, accent);
-  }
-
-  function bolts(x, y, w, h, alpha = 0.7) {
-    for (let px = x + 8; px < x + w - 5; px += 26) {
-      rect(px, y + 7, 4, 4, "#9bdde0", alpha);
-      rect(px, y + h - 11, 4, 4, "#06202d", alpha);
+  function drawIcon(kind, x, y, accent, pulse) {
+    const dark = "#04131f";
+    if (kind === "buoy") {
+      rect(x + 4, y + 3, 12, 4, accent, pulse);
+      rect(x + 1, y + 7, 18, 8, accent, 0.9);
+      rect(x + 5, y + 9, 10, 4, dark, 0.95);
+      rect(x + 6, y + 15, 8, 3, "#fff0bf", 0.85);
+    } else if (kind === "bubble") {
+      rect(x + 3, y + 3, 6, 3, "#d9fbff", pulse);
+      rect(x, y + 6, 3, 7, accent, 0.86);
+      rect(x + 9, y + 5, 3, 9, accent, 0.62);
+      rect(x + 5, y + 14, 6, 3, "#2f8fa3", 0.82);
+      rect(x + 13, y + 2, 5, 5, "#d9fbff", pulse * 0.75);
+    } else if (kind === "bolt") {
+      rect(x + 8, y + 1, 7, 7, accent, pulse);
+      rect(x + 4, y + 7, 8, 6, accent, pulse);
+      rect(x + 8, y + 12, 6, 7, accent, pulse);
+      rect(x + 3, y + 9, 5, 4, "#fff0bf", 0.9);
+    } else if (kind === "shell") {
+      rect(x + 3, y + 7, 15, 9, accent, 0.9);
+      rect(x + 6, y + 3, 9, 5, "#f3c28f", 0.88);
+      rect(x + 6, y + 10, 3, 6, "#8b5f8f", 0.92);
+      rect(x + 12, y + 9, 3, 7, "#fff0bf", 0.72);
+    } else if (kind === "drop") {
+      rect(x + 8, y + 1, 5, 5, "#d9fbff", pulse);
+      rect(x + 5, y + 5, 11, 10, accent, 0.92);
+      rect(x + 7, y + 15, 7, 3, "#2f9fbd", 0.9);
+      rect(x + 8, y + 7, 3, 5, "#d9fbff", 0.78);
+    } else {
+      rect(x + 3, y + 2, 15, 14, accent, 0.88);
+      rect(x + 6, y + 5, 9, 8, dark, 0.92);
+      rect(x + 9, y, 3, 4, "#d9fbff", 0.75);
+      rect(x + 7, y + 8, 5, 3, "#ffc94a", pulse);
     }
   }
 
-  function canalLandmark(x, tick) {
-    rect(x - 72, 58, 16, 162, "#031724", 0.96);
-    rect(x - 67, 62, 6, 154, "#35717a", 0.72);
-    rect(x + 56, 58, 16, 162, "#031724", 0.96);
-    rect(x + 61, 62, 6, 154, "#35717a", 0.72);
-    rect(x - 80, 70, 160, 17, "#041a27", 0.98);
-    rect(x - 74, 74, 148, 6, "#4b8990", 0.68);
-    for (let gx = x - 54; gx <= x + 50; gx += 26) rect(gx, 95, 5, 70, "#174653", 0.7);
-    const lamp = reducedMotion ? 0.72 : 0.58 + Math.sin(tick * 0.004) * 0.18;
-    rect(x - 11, 93, 22, 12, "#082a36", 0.9);
-    rect(x - 6, 96, 12, 6, "#86e2c7", lamp);
-    sign(x, 172, "CANAL 04", "BOIA NÃO INCLUSA", "#86e2c7", 184);
-  }
+  function plate(landmark, camera, tick) {
+    const centerX = landmark.x - camera + landmark.centerOffset;
+    if (centerX < -landmark.width || centerX > W + landmark.width) return;
 
-  function bubblesLandmark(x, tick) {
-    rect(x - 64, 428, 128, 76, "#031a27", 0.84);
-    rect(x - 55, 438, 110, 58, "#155461", 0.72);
-    rect(x - 45, 448, 90, 7, "#69bdc5", 0.62);
-    bolts(x - 55, 438, 110, 58);
-    for (let i = 0; i < 6; i += 1) {
-      const rise = reducedMotion ? i * 44 : (tick * (0.022 + i * 0.0018) + i * 71) % 330;
-      const bx = x - 44 + (i % 3) * 42;
-      const by = 430 - rise;
-      if (by < 98 || by > 424) continue;
-      const s = 4 + (i % 2) * 2;
-      rect(bx, by + s, s, s * 2, "#56c6d8", 0.58);
-      rect(bx + s, by, s * 2, s, "#d9fbff", 0.65);
-      rect(bx + s * 3, by + s, s, s * 2, "#237a98", 0.5);
-    }
-    sign(x, 104, "BOLHA EXPRESS", "FAVOR NÃO ESTOURAR", "#7eeaf2", 206);
-  }
+    const x = Math.round(centerX - landmark.width / 2);
+    const y = landmark.y;
+    const h = 56;
+    const pulse = reducedMotion ? 0.82 : 0.68 + Math.sin(tick * 0.004 + landmark.x * 0.01) * 0.18;
 
-  function currentLandmark(x, tick) {
-    rect(x - 68, 66, 136, 98, "#061723", 0.9);
-    rect(x - 59, 75, 118, 80, "#183a48", 0.88);
-    bolts(x - 59, 75, 118, 80);
-    const pulse = reducedMotion ? 0.7 : 0.54 + Math.sin(tick * 0.006) * 0.2;
-    for (let i = 0; i < 3; i += 1) {
-      const px = x - 38 + i * 38;
-      rect(px, 100, 18, 28, "#072431", 0.9);
-      rect(px + 5, 106, 8, 16, i === 2 ? "#ffc94a" : "#58d2e2", pulse);
-    }
-    rect(x - 92, 174, 184, 7, "#061a26", 0.9);
-    rect(x - 92, 181, 184, 4, "#2f7180", 0.56);
-    sign(x, 194, "CORRENTEZA 220V", "NÃO USE NA TOMADA", "#ffc94a", 224);
-  }
+    // Sombra dura + placa com cantos em degraus, mesma gramática dos painéis base.
+    rect(x + 5, y + 5, landmark.width, h, "#010814", 0.7);
+    rect(x + 4, y, landmark.width - 8, h, "#061426", 0.98);
+    rect(x, y + 4, landmark.width, h - 8, "#061426", 0.98);
+    rect(x + 4, y + 4, landmark.width - 8, h - 8, "#173744", 0.98);
+    rect(x + 8, y + 8, landmark.width - 16, 4, landmark.accent, pulse);
+    rect(x + 8, y + h - 12, landmark.width - 16, 4, "#031522", 0.88);
 
-  function shellLandmark(x, tick) {
-    const glow = reducedMotion ? 0.7 : 0.6 + Math.sin(tick * 0.003) * 0.15;
-    rect(x - 86, 372, 18, 132, "#092630", 0.74);
-    rect(x + 68, 372, 18, 132, "#092630", 0.74);
-    rect(x - 76, 356, 152, 20, "#123844", 0.84);
-    rect(x - 65, 361, 130, 6, "#5b8e8e", 0.5);
-    for (let i = 0; i < 5; i += 1) {
-      const px = x - 58 + i * 29;
-      rect(px, 337 - (i % 2) * 8, 22, 18, "#775d87", 0.72);
-      rect(px + 5, 332 - (i % 2) * 8, 12, 7, "#c290ad", glow);
-      rect(px + 9, 330 - (i % 2) * 8, 5, 4, "#ffe2d3", glow);
-    }
-    sign(x, 276, "MEXILHÃO VIP", "ENTRADA SÓ DE CONCHA", "#d3a9cd", 222);
-  }
+    // Parafusos e ícone temático reforçam que a placa pertence ao cenário.
+    rect(x + 7, y + 7, 3, 3, "#d9fbff", 0.68);
+    rect(x + landmark.width - 10, y + 7, 3, 3, "#d9fbff", 0.68);
+    rect(x + 7, y + h - 10, 3, 3, "#06202d", 0.86);
+    rect(x + landmark.width - 10, y + h - 10, 3, 3, "#06202d", 0.86);
+    drawIcon(landmark.icon, x + 11, y + 17, landmark.accent, pulse);
 
-  function reservoirLandmark(x, tick) {
-    rect(x - 70, 70, 140, 178, "#031722", 0.9);
-    rect(x - 59, 80, 118, 158, "#164755", 0.8);
-    rect(x - 48, 91, 96, 128, "#0b6b86", 0.44);
-    bolts(x - 59, 80, 118, 158);
-    const waterLine = 112 + (reducedMotion ? 0 : Math.sin(tick * 0.0025) * 4);
-    rect(x - 43, waterLine, 86, 97, "#2f9fbd", 0.24);
-    rect(x - 43, waterLine, 86, 5, "#8deaff", 0.62);
-    rect(x - 92, 246, 184, 14, "#041923", 0.96);
-    rect(x - 82, 250, 164, 5, "#4b7e83", 0.62);
-    sign(x, 274, "ÁGUA pOtÁVIO", "QUASE POTÁVEL", "#75e6ef", 206);
-  }
-
-  function arenaLandmark(x, tick) {
-    rect(x - 92, 58, 20, 446, "#03131f", 0.94);
-    rect(x + 72, 58, 20, 446, "#03131f", 0.94);
-    rect(x - 85, 62, 7, 438, "#315d67", 0.7);
-    rect(x + 78, 62, 7, 438, "#315d67", 0.7);
-    rect(x - 106, 58, 212, 18, "#02121c", 0.98);
-    rect(x - 98, 62, 196, 7, "#4c7d84", 0.62);
-    for (let i = 0; i < 7; i += 1) {
-      const blink = reducedMotion ? 0.65 : (Math.floor(tick / 210 + i) % 2 ? 0.82 : 0.36);
-      rect(x - 76 + i * 25, 85, 9, 7, i < 4 ? "#ffc94a" : "#e94e50", blink);
-    }
-    sign(x, 110, "ARENA DO GALÃO", "NÃO APERTE A BARRIGA", "#ffcf62", 224);
-  }
-
-  function drawLandmark(landmark, screenX, tick) {
-    if (landmark.kind === "canal") canalLandmark(screenX, tick);
-    else if (landmark.kind === "bubbles") bubblesLandmark(screenX, tick);
-    else if (landmark.kind === "current") currentLandmark(screenX, tick);
-    else if (landmark.kind === "shell") shellLandmark(screenX, tick);
-    else if (landmark.kind === "reservoir") reservoirLandmark(screenX, tick);
-    else arenaLandmark(screenX, tick);
+    const textCenter = centerX + 7;
+    const titleSize = landmark.title.length > 15 ? 9 : 11;
+    const lineSize = landmark.line.length > 19 ? 7 : 8;
+    text(landmark.title, textCenter, y + 24, titleSize, "#fff0bf");
+    text(landmark.line, textCenter, y + 41, lineSize, landmark.accent);
   }
 
   function drawStoryFrame() {
@@ -206,14 +159,9 @@
 
     const camera = cameraFor(debug);
     const tick = performance.now();
-
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    for (const landmark of LANDMARKS) {
-      const screenX = landmark.x - camera;
-      if (screenX < -150 || screenX > W + 150) continue;
-      drawLandmark(landmark, screenX, tick);
-    }
+    for (const landmark of LANDMARKS) plate(landmark, camera, tick);
     ctx.restore();
   }
 
@@ -246,8 +194,11 @@
   proto.drawImage = storyParityDrawImage;
   proto.__shallStage4StoryParityInstalled = true;
 
-  window.__shallStage4StoryParity = () => ({
-    landmarks: LANDMARKS.length,
-    reducedMotion,
+  window.__shallStage4StoryParity = Object.freeze({
+    landmarkCount: LANDMARKS.length,
+    mode: "signage-only",
+    architectureWrites: false,
+    gameplayWrites: false,
+    lines: Object.freeze(LANDMARKS.map(({ title, line }) => `${title} · ${line}`)),
   });
 })();
