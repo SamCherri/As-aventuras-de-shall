@@ -2,14 +2,18 @@
   "use strict";
 
   /*
-   * Fase 4 — paridade de staging da transformação do Shall.
+   * Fase 4 — ponte visual canônica Shall → Mexilhãozinho.
    *
-   * Na Fase 3, a transformação Biluia tem antecipação, mudança de ritmo, impacto,
-   * burst e uma leitura clara do novo estado. A Fase 4 já possuía 2,4 s de
-   * transformação, mas visualmente era quase só um único frame crescendo.
-   * Este passe usa o próprio frame canônico do Mexilhãozinho como âncora e
-   * acrescenta somente VFX/encenação no render. Nenhuma variável de gameplay é
-   * escrita ou alterada.
+   * As Fases 1–3 mantêm o Shall canônico visível antes de qualquer transformação
+   * e usam antecipação/impacto para comunicar a mudança de forma. A Fase 4 já
+   * tinha 2,4 s de transformação, mas, com a arte nativa pronta, substituía Shall
+   * imediatamente por um único frame comprimido do atlas aquático.
+   *
+   * Este passe preserva o MESMO timer e o MESMO estado de gameplay. Durante o
+   * draw do frame de transformação, o Shall canônico das Fases 1–3 permanece
+   * visível no primeiro ato, comprime/dissolve no segundo e entrega a leitura ao
+   * frame do Mexilhãozinho no terceiro. Nenhuma variável de física, HP, posição,
+   * colisão, controle ou duração da transformação é escrita por este módulo.
    */
 
   const proto = window.CanvasRenderingContext2D?.prototype;
@@ -19,8 +23,15 @@
   const TARGET_CANVAS_ID = "stage4-canvas";
   const HERO_REGION = { x: 137, y: 0, w: 80, h: 60 };
   const TRANSFORM_LOCAL = [261, 110, 55, 98];
+  const CANONICAL_SHALL_SRC = "./assets/shall-short-neck-idle.png";
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
   const heroName = document.querySelector(".stage4-hud .life-wrap > span");
+
+  const canonicalShall = new Image();
+  canonicalShall.decoding = "async";
+  canonicalShall.src = CANONICAL_SHALL_SRC;
+  let canonicalReady = canonicalShall.complete && canonicalShall.naturalWidth > 0;
+  canonicalShall.addEventListener("load", () => { canonicalReady = true; }, { once: true });
 
   let sawTransform = false;
   let completionAt = 0;
@@ -59,6 +70,11 @@
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function smoothstep(edge0, edge1, value) {
+    const x = clamp((value - edge0) / Math.max(0.0001, edge1 - edge0), 0, 1);
+    return x * x * (3 - 2 * x);
   }
 
   function syncHud(debug) {
@@ -165,6 +181,56 @@
     ctx.restore();
   }
 
+  function drawCanonicalShall(ctx, cx, cy, progress) {
+    if (!canonicalReady || !canonicalShall.naturalWidth || !canonicalShall.naturalHeight) return false;
+
+    const fade = 1 - smoothstep(0.28, 0.72, progress);
+    if (fade <= 0.001) return false;
+
+    // Aproxima a presença de ~124 px usada pelo Shall nas Fases 1–3 e comprime
+    // a silhueta gradualmente antes da forma aquática assumir a leitura.
+    const boxW = 104 + progress * 14;
+    const boxH = 126 - smoothstep(0.20, 0.72, progress) * 34;
+    const scale = Math.min(boxW / canonicalShall.naturalWidth, boxH / canonicalShall.naturalHeight);
+    const width = Math.max(1, Math.round(canonicalShall.naturalWidth * scale));
+    const height = Math.max(1, Math.round(canonicalShall.naturalHeight * scale));
+    const sink = smoothstep(0.18, 0.72, progress) * 8;
+    const pulse = reducedMotion ? 1 : 1 + Math.sin(performance.now() * 0.018) * 0.018 * (1 - progress);
+
+    ctx.save();
+    ctx.globalAlpha *= fade;
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(Math.round(cx), Math.round(cy + sink));
+    ctx.scale(pulse, 1 / pulse);
+    previousDrawImage.call(
+      ctx,
+      canonicalShall,
+      0,
+      0,
+      canonicalShall.naturalWidth,
+      canonicalShall.naturalHeight,
+      Math.round(-width / 2),
+      Math.round(-height / 2),
+      width,
+      height,
+    );
+    ctx.restore();
+    return true;
+  }
+
+  function drawMorphBands(ctx, cx, cy, progress) {
+    if (progress < 0.24 || progress > 0.84) return;
+    const local = smoothstep(0.24, 0.52, progress) * (1 - smoothstep(0.68, 0.84, progress));
+    const span = 86 - progress * 18;
+    const yStep = 13;
+    for (let i = -3; i <= 3; i += 1) {
+      const stagger = (Math.abs(i) % 2) * 7;
+      const width = span - Math.abs(i) * 7;
+      const color = i % 2 === 0 ? "#d9fbff" : "#69d9f2";
+      pixel(ctx, cx - width / 2 + stagger, cy + i * yStep - 3, width, 4, color, local * 0.16);
+    }
+  }
+
   function drawCompletion(ctx, cx, cy, age) {
     const duration = 900;
     const progress = clamp(age / duration, 0, 1);
@@ -211,6 +277,19 @@
     return clamp((widthProgress + heightProgress) * 0.5, 0, 1);
   }
 
+  function drawNativeTransform(ctx, image, args, progress) {
+    // O frame nativo entra apenas depois que Shall foi claramente apresentado.
+    // Assim a mudança é lida como transformação do personagem canônico, não como
+    // um sprite aquático que já existe desde o primeiro frame da fase.
+    const alpha = canonicalReady ? smoothstep(0.30, 0.76, progress) : 1;
+    if (alpha <= 0.001) return undefined;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    const result = previousDrawImage.call(ctx, image, ...args);
+    ctx.restore();
+    return result;
+  }
+
   function parityDrawImage(image, ...args) {
     if (this.canvas?.id !== TARGET_CANVAS_ID || args.length !== 8) {
       return previousDrawImage.call(this, image, ...args);
@@ -234,7 +313,9 @@
       completionAt = 0;
       const progress = progressFromDrawSize(dw, dh);
       drawCharge(this, cx, cy, dw, dh, progress, now);
-      return previousDrawImage.call(this, image, ...args);
+      drawCanonicalShall(this, cx, cy - 2, progress);
+      drawMorphBands(this, cx, cy, progress);
+      return drawNativeTransform(this, image, args, progress);
     }
 
     const result = previousDrawImage.call(this, image, ...args);
@@ -258,8 +339,10 @@
   proto.__shallStage4TransformParityInstalled = true;
 
   window.__shallStage4TransformParity = Object.freeze({
-    language: "anticipation-charge-impact",
+    language: "canonical-shall-morph-mexilhao",
     transformSource: TRANSFORM_SOURCE.slice(),
+    canonicalSource: CANONICAL_SHALL_SRC,
+    stages: ["canonical-shall", "compression-crossfade", "mexilhao-reveal"],
     reducedMotion,
     gameplayWrites: false,
   });
