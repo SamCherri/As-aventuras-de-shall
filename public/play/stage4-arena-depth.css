@@ -13,9 +13,10 @@
   top: 64%;
   width: 29%;
   height: 7%;
-  opacity: .38;
+  opacity: .42;
   background:
-    linear-gradient(90deg, transparent 0 7%, #02111d 7% 18%, #031725 18% 82%, #02111d 82% 93%, transparent 93% 100%);
+    linear-gradient(90deg, transparent 0 7%, #02111d 7% 18%, #031725 18% 82%, #02111d 82% 93%, transparent 93% 100%),
+    linear-gradient(180deg, transparent 0 30%, #061f2d 30% 58%, #010a12 58% 100%);
   clip-path: polygon(8% 28%, 24% 10%, 76% 10%, 92% 28%, 100% 55%, 84% 80%, 16% 80%, 0 55%);
 }
 
@@ -26,11 +27,16 @@
   bottom: 0;
   width: 66px;
   height: 190px;
-  opacity: .82;
+  opacity: .86;
   background:
-    linear-gradient(90deg, rgba(117, 211, 219, .22) 0 4px, transparent 4px 100%),
+    linear-gradient(90deg, rgba(168, 239, 244, .34) 0 4px, transparent 4px 100%),
+    linear-gradient(180deg, transparent 0 18px, rgba(95, 187, 194, .28) 18px 22px, transparent 22px 54px, rgba(90, 173, 181, .24) 54px 58px, transparent 58px 100%),
     repeating-linear-gradient(180deg, #174e58 0 22px, #123e50 22px 44px, #0e3542 44px 66px);
-  border-left: 3px solid rgba(142, 229, 238, .32);
+  border-left: 3px solid rgba(142, 229, 238, .38);
+  box-shadow:
+    inset -8px 0 0 rgba(3, 29, 39, .42),
+    inset 0 -12px 0 rgba(2, 22, 31, .46),
+    -6px 0 0 rgba(2, 18, 28, .18);
   clip-path: polygon(44% 0, 100% 0, 100% 100%, 0 100%, 0 77%, 19% 67%, 7% 52%, 31% 40%, 20% 24%);
 }
 
